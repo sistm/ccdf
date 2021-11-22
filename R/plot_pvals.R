@@ -20,9 +20,9 @@
 
 
 plot_pvals <- function(pvals){
-  t <- c(1:length(pvals))
+  t <- 1:length(pvals)
   s <- (t/length(pvals))*0.05
-  df_plot_perm <- data.frame("y" = sort(pvals), "x" = c(1:length(pvals)))
+  df_plot_perm <- data.frame("y" = sort(pvals), "x" = 1:length(pvals))
   ggplot()+ scale_y_log10()+
     geom_point(data = df_plot_perm,aes_string(x = "x", y = "y", color = shQuote(viridis(4)[1])), size = 0.5)+
     geom_line(data = df_plot_perm, aes_string(y = "s", x = "x",color = shQuote(viridis(4)[2])), size = 0.5) +

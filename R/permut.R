@@ -9,9 +9,14 @@
 #'@param Z a data frame containing numeric or factor vector(s) of size \code{n}
 #'containing the covariate(s).
 #'
+#' @param sample_group a vector of length \code{n} indicating whether the samples
+#'should be grouped (e.g. paired samples or longitudinal data). Coerced
+#'to be a \code{factor}. Default is \code{NULL} in which case no grouping is
+#'performed.
+#'
 #'@param method a character string indicating which method to use to
 #'compute the CCDF, either \code{'linear regression'}, \code{'logistic regression'}
-#' and  \code{'permutations'} or \code{'RF'} for Random Forests.
+#' and  \code{'permutations'}, \code{'RF'} for Random Forests or \code{'mixed model'} for mixture model
 #'Default is \code{'linear regression'} since it is the method used in the test.
 #'
 #'#'@param parallel a logical flag indicating whether parallel computation
@@ -45,7 +50,7 @@
 #'Y <- ((X==1)*rnorm(n = 50,0,1)) + ((X==0)*rnorm(n = 50,0.5,1))
 #'permut(Y,X,method="linear regression",n_perm=10,n_cpus=2)}
 
-permut <- function(Y, X, Z = NULL, distance = "L2", n_perm, method="logistic regression",
+permut <- function(Y, X, Z = NULL, sample_group=NULL,distance = "L2", n_perm, method="logistic regression",
                      parallel = TRUE, n_cpus = NULL, fast=TRUE){
 
   if(parallel){
@@ -61,7 +66,7 @@ permut <- function(Y, X, Z = NULL, distance = "L2", n_perm, method="logistic reg
 
   if (is.null(Z)){
 
-    res <- CDF(Y, X, method=method, fast=fast)
+    res <- CDF(Y, X, sample_group=sample_group, method=method, fast=fast)
     w_init <- weights_ccdf(Y,X)
 
     if (distance=="L2"){
@@ -76,7 +81,7 @@ permut <- function(Y, X, Z = NULL, distance = "L2", n_perm, method="logistic reg
 
     results <- foreach(i = 1:n_perm, .combine = 'c') %dopar% {
       X_star <- sample(X)
-      res_perm <- CDF(Y=Y, X=X_star, method=method, fast = fast)
+      res_perm <- CDF(Y=Y, X=X_star, sample_group=sample_group, method=method, fast = fast)
       w_perm <- weights_ccdf(Y,X_star)
       switch(distance,
              "L2" = sqrt(sum(w_perm*(res$cdf-res_perm$ccdf)^2)),
@@ -88,7 +93,7 @@ permut <- function(Y, X, Z = NULL, distance = "L2", n_perm, method="logistic reg
 
   else{
 
-    res_init <-  CDF(Y, X, Z, method=method, fast=fast)
+    res_init <-  CDF(Y, X, Z, sample_group, method=method, fast=fast)
     w_init <- weights_ccdf(Y,X,Z)
 
     init_dist <- sqrt(sum(w_init*(res_init$ccdf_nox-res_init$ccdf_x)^2))
@@ -121,15 +126,13 @@ permut <- function(Y, X, Z = NULL, distance = "L2", n_perm, method="logistic reg
                     "factor" = sample_X(X,Z,unique(Z)),
                     "numeric" = perm_cont(Y,X,Z))
 
-      res <- CDF(Y,X_star,Z, method=method, fast=fast)
+      res <- CDF(Y,X_star,Z, sample_group, method=method, fast=fast)
       w_perm <- weights_ccdf(Y,X_star,Z)
 
       switch(distance,
              L2 = sqrt(sum(w_perm*(res_init$ccdf_nox-res$ccdf_x)^2)),
              L1 = sum(w_perm*abs(res_init$ccdf_nox-res$ccdf_x)),
              L_sup = max(w_perm*abs(res_init$ccdf_nox-res$ccdf_x)))
-
-      #AD = length(Y)*sum(((res$ccdf_nox-res$ccdf_x)^2)/(res$ccdf_nox*(1-res$ccdf_nox)))
     }
   }
   

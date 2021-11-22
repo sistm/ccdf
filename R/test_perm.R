@@ -9,6 +9,11 @@
 #'@param Z a data frame of numeric or factor vector(s) 
 #'of size \code{n} containing the covariate(s). Multiple variables are not allowed.
 #'
+#' @param sample_group a vector of length \code{n} indicating whether the samples
+#'should be grouped (e.g. paired samples or longitudinal data). Coerced
+#'to be a \code{factor}. Default is \code{NULL} in which case no grouping is
+#'performed.
+#'
 #'@param n_perm the number of permutations. Default is \code{100}.
 #'
 #'@param parallel a logical flag indicating whether parallel computation
@@ -29,6 +34,7 @@
 #' @import doParallel
 #' @import parallel
 #' @import foreach
+#' @importFrom lme4 lmer
 #'
 #' @export
 #' 
@@ -45,7 +51,7 @@
 #'Y <- ((X==1)*rnorm(n = 50,0,1)) + ((X==0)*rnorm(n = 50,0.5,1))
 #'res_perm <- test_perm(Y,data.frame(X=X),n_perm=10)}
 
-test_perm <- function(Y, X, Z = NULL, n_perm = 100, parallel = FALSE, n_cpus = NULL, space_y = FALSE, number_y = length(Y)){
+test_perm <- function(Y, X, Z = NULL, method=c("linear regression", "mixed model"), sample_group=NULL, n_perm = 100, parallel = FALSE, n_cpus = NULL, space_y = FALSE, number_y = length(Y)){
 
   if(parallel){
     if(is.null(n_cpus)){
@@ -57,7 +63,8 @@ test_perm <- function(Y, X, Z = NULL, n_perm = 100, parallel = FALSE, n_cpus = N
   else{
     n_cpus <- 1
   }
-  
+  if(length(method)>1) method <- method[1]
+  stopifnot(method %in% c("linear regression","mixed model"))
   Y <- as.numeric(Y)
   
   if (space_y){
@@ -88,8 +95,22 @@ test_perm <- function(Y, X, Z = NULL, n_perm = 100, parallel = FALSE, n_cpus = N
   for (i in 1:(length(y)-1)){ # on fait varier le seuil
     indi_Y <- 1*(Y<=y[i])
     indi_pi[,i] <- indi_Y
-    reg <- lm(indi_Y ~ as.matrix(modelmat[,-1]))
-    beta[i,] <- reg$coefficients[ind_X]
+    if(method == "linear regression"){
+      reg <- lm(indi_Y ~ as.matrix(modelmat[,-1]))
+      beta[i,] <- reg$coefficients[ind_X]
+    }
+    else if(method == "mixed model"){
+      if(is.null(sample_group)) {
+            warning("Some transcripts in the investigated gene sets were ",
+                    "not measured:\nremoving those transcripts from the ",
+                    "gene set definition...")
+            break
+          }
+          else{
+            mod_mixed <- lmer(indi_Y ~ 1 + modelmat[,-1] + (1|sample_group))
+            beta[i,] <- lme4::fixef(mod_mixed)[ind_X]
+      }
+    }
   }
   
   beta <- as.vector(beta)

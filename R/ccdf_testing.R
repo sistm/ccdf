@@ -10,6 +10,11 @@
 #'@param covariate a data frame of numeric or factor vector(s) 
 #'of size \code{n} containing the covariate(s)
 #'
+#'@param sample_group a vector of length \code{n} indicating whether the samples
+#'should be grouped (e.g. paired samples or longitudinal data). Coerced
+#'to be a \code{factor}. Default is \code{NULL} in which case no grouping is
+#'performed.
+#'
 #'@param test a character string indicating which method to use to
 #'compute the test, either \code{'asymptotic'}, \code{'permutations'} or 
 #'\code{'dist_permutations'}. \code{'dist_permutations'} allows to compute
@@ -98,9 +103,10 @@
 ccdf_testing <- function(exprmat = NULL,
                          variable2test = NULL,
                          covariate = NULL,
+                         sample_group = NULL,
                          distance = c("L2","L1","L_sup"),
                          test = c("asymptotic","permutations","dist_permutations"),
-                         method = c("linear regression","logistic regression","RF"),
+                         method = c("linear regression","logistic regression","RF", "mixed model"),
                          fast = TRUE,
                          n_perm = 100,
                          n_perm_adaptive = c(100,150,250,500),
@@ -145,7 +151,7 @@ ccdf_testing <- function(exprmat = NULL,
   if (length(method) > 1) {
     method <- method[1]
   }
-  stopifnot(method %in% c("linear regression","logistic regression"))
+  stopifnot(method %in% c("linear regression","logistic regression","mixed model"))
   
   if (length(test) > 1) {
     test <- test[1]
@@ -231,6 +237,7 @@ ccdf_testing <- function(exprmat = NULL,
             Y = exprmat[index,][i,],
             X = variable2test,
             Z = covariate,
+            sample_group = sample_group,
             n_perm = n_perm_adaptive[k+1],
             parallel = parallel,
             n_cpus = n_cpus)$score},cl=1)
@@ -252,6 +259,7 @@ ccdf_testing <- function(exprmat = NULL,
         Y = exprmat[i,],
         X = variable2test,
         Z = covariate,
+        sample_group = sample_group,
         distance=distance,
         n_perm = n_perm,
         method = method,
@@ -320,20 +328,16 @@ ccdf_testing <- function(exprmat = NULL,
         test_perm(Y = exprmat[i,],
                   X = variable2test,
                   Z = covariate,
+                  sample_group = sample_group,
                   n_perm = n_perm,
                   parallel = FALSE,
                   n_cpus = 1,
                   space_y = space_y, 
                   number_y = number_y)},cl=n_cpus))
-      
-      #res <- as.vector(unlist(res))
-      
       df <- data.frame(raw_pval = res$raw_pval,
                        adj_pval = p.adjust(res$raw_pval, method = "BH"))
       
     }
-    
-    
   }
   
   else if (test=="asymptotic"){
@@ -345,8 +349,6 @@ ccdf_testing <- function(exprmat = NULL,
                                                                                number_y = number_y)}, cl=n_cpus))
     df <- data.frame(raw_pval = res$raw_pval, adj_pval = p.adjust(res$raw_pval, method = "BH"), test_statistic = res$Stat)
   }
-  
-  #rownames(df) <- genes_names
   
   if (adaptive == TRUE){
     n_perm <- cumsum(n_perm_adaptive)

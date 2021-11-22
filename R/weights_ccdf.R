@@ -11,6 +11,11 @@
 #'containing the covariate.
 #'Multiple variables are not allowed
 #'
+#' @param sample_group a vector of length \code{n} indicating whether the samples
+#'should be grouped (e.g. paired samples or longitudinal data). Coerced
+#'to be a \code{factor}. Default is \code{NULL} in which case no grouping is
+#'performed.
+#'
 #'@export
 #' 
 #'@keywords internal
@@ -24,7 +29,7 @@
 #'res_asymp <- weights_ccdf(Y,X)
 
 
-weights_ccdf <- function(Y,X,Z=NULL){
+weights_ccdf <- function(Y,X,Z=NULL,sample_group=NULL){
 
   find_unique <- function(couple, unique_couple){
     index_list <- list()
@@ -48,6 +53,8 @@ weights_ccdf <- function(Y,X,Z=NULL){
   else{
     couple <- data.frame(Y=Y[temp_order],X=X[temp_order],Z=Z[temp_order])
   }
+  if(!is.null(sample_group))
+    couple <- cbind(couple, sample_group=sample_group[temp_order])
 
   unique_couple <- unique(couple)
   index_list <- find_unique(couple,unique_couple)

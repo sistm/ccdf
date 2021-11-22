@@ -9,6 +9,11 @@
 #'@param Z a numeric or factor vector of size \code{n}
 #'containing the covariate. Multiple variables are not allowed.
 #'
+#' @param sample_group a vector of length \code{n} indicating whether the samples
+#'should be grouped (e.g. paired samples or longitudinal data). Coerced
+#'to be a \code{factor}. Default is \code{NULL} in which case no grouping is
+#'performed.
+#'
 #'@param method a character string indicating which method to use to
 #'compute the CCDF, either \code{'linear regression'}, \code{'logistic regression'}
 #' and  \code{'permutations'} or \code{'RF'} for Random Forests.
@@ -38,15 +43,13 @@
 #'plot_CCDF(data.frame(Y=Y),data.frame(X=X),method="linear regression")
 
 
-plot_CCDF <- function(Y,X,Z=NULL,method="linear regression",fast=TRUE,space_y=FALSE,number_y=length(Y)){
+plot_CCDF <- function(Y,X,Z=NULL,sample_group=NULL,method="linear regression",fast=TRUE,space_y=FALSE,number_y=length(Y)){
   
   
   stopifnot(is.data.frame(Y))
   stopifnot(is.data.frame(X))
   stopifnot(is.data.frame(Z) | is.null(Z))
   stopifnot(is.logical(fast))
-  
-  genes_names <- colnames(Y)
   
   if (sum(is.na(Y)) > 1) {
     warning("'y' contains", sum(is.na(Y)), "NA values. ",
@@ -60,24 +63,24 @@ plot_CCDF <- function(Y,X,Z=NULL,method="linear regression",fast=TRUE,space_y=FA
   if (length(method) > 1) {
     method <- method[1]
   }
-  stopifnot(method %in% c("linear regression","logistic regression", "CART", "RF"))
-  
-  
+  stopifnot(method %in% c("linear regression","logistic regression", "CART", "RF", "mixed model"))
+
   if (space_y){
     if (is.null(number_y)){
       warning("Missing argument", number_y, ". No spacing is used.")
       space_y <- FALSE
     }
   }
-  
-  
-  res <- CCDF(as.numeric(Y[,1]),X,Z,method,fast,space_y,number_y)
-  
-  
+
+  res <- CCDF(as.numeric(Y[,1]),X,Z,sample_group = sample_group,method,fast,space_y,number_y)
+
+
   if (class(Z[,1])=="NULL"){
-    
-    df_plot <- data.frame("y" = res$y, "x" = res$x, "cdf" = res$cdf, "ccdf" = res$ccdf)
-    
+    if (method == "mixed model" & !is.null(sample_group))
+      df_plot <- data.frame("y" = res$y, "x" = res$x, "sample_group" = res$sample_group,"cdf" = res$cdf, "ccdf" = res$ccdf)
+    else
+      df_plot <- data.frame("y" = res$y, "x" = res$x, "cdf" = res$cdf, "ccdf" = res$ccdf)
+
     if (is.factor(X[,1])){
       levels(df_plot$x) <- unique(X[,1])
       df_plot$x <- ordered(df_plot$x, levels = levels(df_plot$x))
@@ -107,11 +110,13 @@ plot_CCDF <- function(Y,X,Z=NULL,method="linear regression",fast=TRUE,space_y=FA
   
   else{ # Z is specified
     
-    res <- CCDF(as.numeric(Y[,1]),X,Z,method,fast,space_y,number_y)
+    res <- CCDF(as.numeric(Y[,1]),X,Z,sample_group,method,fast,space_y,number_y)
+    if(method == "mixed model")
+      df_plot <- data.frame("y" = res$y, "x" = res$x, "z" = res$z, "sample_group" = res$sample_group, "cdf" = res$cdf, "ccdf_nox" = res$ccdf_nox,  "ccdf_x" = res$ccdf_x, "shape1"= "20", "shape2" = "3")
+    else
+      df_plot <- data.frame("y" = res$y, "x" = res$x, "z" = res$z, "cdf" = res$cdf, "ccdf_nox" = res$ccdf_nox,  "ccdf_x" = res$ccdf_x, "shape1"= "20", "shape2" = "3")
     
-    df_plot <- data.frame("y" = res$y, "x" = res$x, "z" = res$z, "cdf" = res$cdf, "ccdf_nox" = res$ccdf_nox,  "ccdf_x" = res$ccdf_x, "shape1"= "20", "shape2" = "3")
-    
-    res_X <- CCDF(as.numeric(Y[,1]),X,Z=NULL,method,fast,space_y,number_y)
+    res_X <- CCDF(as.numeric(Y[,1]),X,Z=NULL,sample_group,method,fast,space_y,number_y)
     df_X <- data.frame("y" = res_X$y, "x" = res_X$x, "cdf" = res_X$cdf, "ccdf" = res_X$ccdf)
     
     if (is.factor(Z[,1])){ # Z factor

@@ -9,6 +9,11 @@
 #'@param Z a data frame containing numeric or factor vector(s) of size \code{n}
 #'containing the covariate(s).
 #'
+#'@param sample_group a vector of length \code{n} indicating whether the samples
+#'should be grouped (e.g. paired samples or longitudinal data). Coerced
+#'to be a \code{factor}. Default is \code{NULL} in which case no grouping is
+#'performed.
+#'
 #'@param method a character string indicating which method to use to
 #'compute the CCDF, either \code{'linear regression'}, \code{'logistic regression'}
 #' and  \code{'permutations'} or \code{'RF'} for Random Forests.
@@ -34,6 +39,7 @@
 #' @import RcppNumerical
 #' @importFrom  randomForest randomForest
 #' @import rpart
+#' @importFrom lme4 lmer
 #' 
 #' @export
 #' 
@@ -45,8 +51,7 @@
 #'res <- CDF(Y,X,method="linear regression")
 #' 
 
-
-CDF <- function(Y,X,Z=NULL,method="linear regression", fast=TRUE){
+CDF <- function(Y,X,Z=NULL,sample_group=NULL,method="linear regression", fast=TRUE){
 
   if (class(Z)=="NULL"){
     n_Y <- length(Y)
@@ -54,6 +59,7 @@ CDF <- function(Y,X,Z=NULL,method="linear regression", fast=TRUE){
     y <- sort(unique(Y))
     y_sort <- sort(Y)
     x_sort <- X[temp_order]
+    if(method == 'mixed model' & !is.null(sample_group)) sample_group_sort <- sample_group[temp_order]
     modelmat <- model.matrix(Y~X)
 
     cdf <- list()
@@ -101,12 +107,29 @@ CDF <- function(Y,X,Z=NULL,method="linear regression", fast=TRUE){
           reg <- lm(indi_Y ~ 1 + modelmat[,2])
           ccdf[[i]] <- predict(reg)[w]
         }
+        else if(method == "mixed model"){
+          if(is.null(sample_group)) {
+            warning("Some transcripts in the investigated gene sets were ",
+                    "not measured:\nremoving those transcripts from the ",
+                    "gene set definition...")
+            break
+          }
+          else{
+            mod_mixed <- lmer(indi_Y ~ 1 + modelmat[,2] + (1|sample_group))
+            ccdf[[i]] <- fitted(mod_mixed)[w]
+
+          }
+        }
       }
     }
 
     ccdf <- unlist(ccdf, use.names = FALSE)
     cdf <- unlist(cdf, use.names = FALSE)
-    return(list(cdf=cdf, ccdf=ccdf, y=y_sort, x=x_sort))
+    ifelse(
+      method == "mixed model",
+           return(list(cdf=cdf, ccdf=ccdf, y=y_sort, x=x_sort, sample_group = sample_group_sort)),
+                  return(list(cdf=cdf, ccdf=ccdf, y=y_sort, x=x_sort)))
+
   }
 
   else{
@@ -117,6 +140,7 @@ CDF <- function(Y,X,Z=NULL,method="linear regression", fast=TRUE){
     y_sort <- sort(Y)
     x_sort <- X[temp_order]
     z_sort <- Z[temp_order]
+    if(method == 'mixed model' & !is.null(sample_group)) sample_group_sort <- sample_group[temp_order]
     modelmat <- model.matrix(Y~X+Z)
 
     ccdf_x <- list()
@@ -137,7 +161,7 @@ CDF <- function(Y,X,Z=NULL,method="linear regression", fast=TRUE){
         ccdf_x[[i]] <- predict(rf_x)[w]
         # CCDF
         new_data <- data.frame(Z[w])
-        names(new_data) <- c("Z")
+        names(new_data) <- "Z"
         rf_nox <- randomForest(data.frame(Z=Z, row.names = NULL), indi_Y,ntree=50)
         ccdf_nox[[i]] <-  predict(rf_nox)[w]
 
@@ -165,13 +189,32 @@ CDF <- function(Y,X,Z=NULL,method="linear regression", fast=TRUE){
         ccdf_nox[[i]] <- 1/(1+exp_predlin_nox) # exp_predlin_nox/(1+exp_predlin_nox)
 
       }
+      else if (method=="mixed model"){
+        if(is.null(sample_group)) {
+            warning("Some transcripts in the investigated gene sets were ",
+                    "not measured:\nremoving those transcripts from the ",
+                    "gene set definition...")
+            break
+          }
+          else{
+            mod_mixed_x <- lmer(indi_Y ~ 1 + modelmat[,-1] + (1|sample_group))
+            ccdf_x[[i]] <- fitted(mod_mixed_x)[w]
+            mod_mixed_nox <- lmer(indi_Y ~ 1 + modelmat[,-(1:2)] + (1|sample_group))
+            ccdf_nox[[i]] <- fitted(mod_mixed_nox)[w]
+          }
+
+      }
+
     }
 
     ccdf_x <- unlist(ccdf_x, use.names = FALSE)
     ccdf_nox <- unlist(ccdf_nox, use.names = FALSE)
     cdf <- unlist(cdf, use.names = FALSE)
+    ifelse(
+      method == "mixed model",
+           return(list(cdf=cdf, ccdf_nox=ccdf_nox, ccdf_x=ccdf_x, y=y_sort, x_sort=x_sort, z=z_sort, sample_group = sample_group_sort)),
+                  return(list(cdf=cdf, ccdf_nox=ccdf_nox, ccdf_x=ccdf_x, y=y_sort, x_sort=x_sort, z=z_sort)))
 
-    return(list(cdf=cdf, ccdf_nox=ccdf_nox, ccdf_x=ccdf_x, y=y_sort, x_sort=x_sort, z=z_sort))
   }
 }
 
