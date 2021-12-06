@@ -51,7 +51,7 @@
 #'Y <- ((X==1)*rnorm(n = 50,0,1)) + ((X==0)*rnorm(n = 50,0.5,1))
 #'res_perm <- test_perm(Y,data.frame(X=X),n_perm=10)}
 
-test_perm <- function(Y, X, Z = NULL, method=c("linear regression", "mixed model"), sample_group=NULL, n_perm = 100, parallel = FALSE, n_cpus = NULL, space_y = FALSE, number_y = length(Y)){
+test_perm <- function(Y, X, Z = NULL, sample_group=NULL, method=c("linear regression", "mixed model"), n_perm = 100, parallel = FALSE, n_cpus = NULL, space_y = FALSE, number_y = length(Y)){
 
   if(parallel){
     if(is.null(n_cpus)){
@@ -101,10 +101,8 @@ test_perm <- function(Y, X, Z = NULL, method=c("linear regression", "mixed model
     }
     else if(method == "mixed model"){
       if(is.null(sample_group)) {
-            warning("Some transcripts in the investigated gene sets were ",
-                    "not measured:\nremoving those transcripts from the ",
-                    "gene set definition...")
-            break
+            warning("sample_group is null",
+                "No random effects terms specified in formula")
           }
           else{
             mod_mixed <- lmer(indi_Y ~ 1 + modelmat[,-1] + (1|sample_group))

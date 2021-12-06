@@ -121,13 +121,12 @@ ccdf_testing <- function(exprmat = NULL,
   stopifnot(is.data.frame(exprmat))
   stopifnot(is.data.frame(variable2test))
   stopifnot(is.data.frame(covariate) | is.null(covariate))
+  stopifnot(is.data.frame(sample_group) | is.null(sample_group))
   stopifnot(is.logical(parallel))
   stopifnot(is.logical(fast))
   stopifnot(is.logical(adaptive))
   stopifnot(is.numeric(n_perm))
-  
-  genes_names <- rownames(exprmat)
-  
+
   if (sum(is.na(exprmat)) > 1) {
     warning("'y' contains", sum(is.na(exprmat)), "NA values. ",
             "\nCurrently they are ignored in the computations but ",
@@ -135,8 +134,7 @@ ccdf_testing <- function(exprmat = NULL,
             "come from...")
     exprmat <- exprmat[complete.cases(exprmat),]
   }
-  
-  
+
   # checking for 0 variance genes
   v_g <- matrixStats::rowVars(as.matrix(exprmat))
   if(sum(v_g==0) > 0){
@@ -206,7 +204,6 @@ ccdf_testing <- function(exprmat = NULL,
   }
   
   # test
-  
   if (test=="dist_permutations"){
     
     if (adaptive==TRUE){
@@ -217,6 +214,8 @@ ccdf_testing <- function(exprmat = NULL,
         Y = exprmat[i,],
         X = variable2test,
         Z = covariate,
+        sample_group = sample_group,
+        method = method,
         n_perm = n_perm_adaptive[1],
         parallel = TRUE,
         n_cpus = n_cpus)$score},cl=1)
@@ -238,6 +237,7 @@ ccdf_testing <- function(exprmat = NULL,
             X = variable2test,
             Z = covariate,
             sample_group = sample_group,
+            method = method,
             n_perm = n_perm_adaptive[k+1],
             parallel = parallel,
             n_cpus = n_cpus)$score},cl=1)
@@ -260,9 +260,9 @@ ccdf_testing <- function(exprmat = NULL,
         X = variable2test,
         Z = covariate,
         sample_group = sample_group,
+        method = method,
         distance=distance,
         n_perm = n_perm,
-        method = method,
         parallel = parallel,
         n_cpus = n_cpus,
         fast = fast)$pval},cl=1)
@@ -286,6 +286,8 @@ ccdf_testing <- function(exprmat = NULL,
         Y = exprmat[i,],
         X = variable2test,
         Z = covariate,
+        sample_group=sample_group,
+        method = method,
         n_perm = n_perm_adaptive[1],
         parallel = FALSE,
         n_cpus = 1,
@@ -306,6 +308,8 @@ ccdf_testing <- function(exprmat = NULL,
             Y = exprmat[index,][i,],
             X = variable2test,
             Z = covariate,
+            sample_group = sample_group,
+            method = method,
             n_perm = n_perm_adaptive[k],
             parallel = FALSE,
             n_cpus = 1,
@@ -329,6 +333,7 @@ ccdf_testing <- function(exprmat = NULL,
                   X = variable2test,
                   Z = covariate,
                   sample_group = sample_group,
+                  method = method,
                   n_perm = n_perm,
                   parallel = FALSE,
                   n_cpus = 1,
@@ -344,7 +349,9 @@ ccdf_testing <- function(exprmat = NULL,
     Y <- exprmat
     X <- variable2test
     Z <- covariate
-    res <- do.call("rbind",pbapply::pblapply(1:nrow(Y), function(i){test_asymp(Y[i,], X, Z, 
+    res <- do.call("rbind",pbapply::pblapply(1:nrow(Y), function(i){test_asymp(Y[i,], X, Z,
+                                                                               sample_group = sample_group,
+                                                                               method = method,
                                                                                space_y = space_y, 
                                                                                number_y = number_y)}, cl=n_cpus))
     df <- data.frame(raw_pval = res$raw_pval, adj_pval = p.adjust(res$raw_pval, method = "BH"), test_statistic = res$Stat)

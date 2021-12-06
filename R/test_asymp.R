@@ -37,7 +37,7 @@
 #'res_asymp <- test_asymp(Y,data.frame(X=X))
 
 
-test_asymp <- function(Y, X, Z = NULL,method=c("linear regression", "mixed model"), sample_group=NULL,space_y = FALSE, number_y = length(unique(Y))){
+test_asymp <- function(Y, X, Z = NULL, sample_group=NULL,method=c("linear regression", "mixed model"),space_y = FALSE, number_y = length(unique(Y))){
   
   Y <- as.numeric(Y)
   
@@ -61,6 +61,8 @@ test_asymp <- function(Y, X, Z = NULL,method=c("linear regression", "mixed model
     colnames(Z) <- sapply(1:ncol(Z), function(i){paste0('Z',i)})
     modelmat <- model.matrix(~.,data=cbind(X,Z))
   }
+
+  if(!is.null(sample_group))sample_group <- factor(sample_group[,1],levels = unique(sample_group[,1]))
   
   ind_X <- which(substring(colnames(modelmat),1,1)=="X")
   #nb_fact <- colSums(modelmat[,ind_X])
@@ -82,17 +84,13 @@ test_asymp <- function(Y, X, Z = NULL,method=c("linear regression", "mixed model
     }
     else if(method == "mixed model"){
       if(is.null(sample_group)) {
-            warning("Some transcripts in the investigated gene sets were ",
-                    "not measured:\nremoving those transcripts from the ",
-                    "gene set definition...")
-            break
-          }
-          else{
-            mod_mixed <- lmer(indi_Y ~ 1 + modelmat[,-1] + (1|sample_group))
-            beta[i,] <- lme4::fixef(mod_mixed)[ind_X]
+        warning("sample_group is null",
+                "No random effects terms specified in formula")
+      }else {
+        mod_mixed <- lmer(indi_Y ~ 1 + modelmat[, -1] + (1 | sample_group))
+        beta[i,] <- lme4::fixef(mod_mixed)[ind_X]
       }
     }
-
   }
   
   beta <- as.vector(beta)

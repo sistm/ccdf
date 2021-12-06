@@ -109,10 +109,8 @@ CDF <- function(Y,X,Z=NULL,sample_group=NULL,method="linear regression", fast=TR
         }
         else if(method == "mixed model"){
           if(is.null(sample_group)) {
-            warning("Some transcripts in the investigated gene sets were ",
-                    "not measured:\nremoving those transcripts from the ",
-                    "gene set definition...")
-            break
+            warning("sample_group is null",
+                "No random effects terms specified in formula")
           }
           else{
             mod_mixed <- lmer(indi_Y ~ 1 + modelmat[,2] + (1|sample_group))
@@ -191,9 +189,8 @@ CDF <- function(Y,X,Z=NULL,sample_group=NULL,method="linear regression", fast=TR
       }
       else if (method=="mixed model"){
         if(is.null(sample_group)) {
-            warning("Some transcripts in the investigated gene sets were ",
-                    "not measured:\nremoving those transcripts from the ",
-                    "gene set definition...")
+            warning("sample_group is null",
+                "No random effects terms specified in formula")
             break
           }
           else{

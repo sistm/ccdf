@@ -38,8 +38,8 @@ perm_cont <- function(Y,X,Z, sample_group=NULL, method=c("linear regression", "m
   new_prob <- matrix(NA,length(Z),length(Z))
   if(length(method)>1) method <- method[1]
   if (method=="mixed model" & is.null(sample_group)) {
-      warning("Warning")
-      break
+      warning("sample_group is null",
+                "No random effects terms specified in formula")
   }
   else if(method=="mixed model" & !is.null(sample_group))
       reg <- lmer(X ~ Z + (1|sample_group))

@@ -140,8 +140,8 @@ CCDF <- function(Y,X,Z=NULL,method=c("linear regression","logistic regression","
         }
         else if(method == "mixed model"){
           if(is.null(sample_group)) {
-            warning("warning")
-            break
+            warning("sample_group is null",
+                "No random effects terms specified in formula")
           }
           else{
             mod_mixed <- lmer(indi_Y ~ 1 + modelmat[,-1] + (1|sample_group))
@@ -246,10 +246,8 @@ CCDF <- function(Y,X,Z=NULL,method=c("linear regression","logistic regression","
       }
       else if(method == "mixed model"){
         if(is.null(sample_group)) {
-            warning("Some transcripts in the investigated gene sets were ",
-                    "not measured:\nremoving those transcripts from the ",
-                    "gene set definition...")
-            break
+            warning("sample_group is null",
+                "No random effects terms specified in formula")
           }
         else{
           mod_mixed_x <- lmer(indi_Y ~ 1 + modelmat[,-1] + (1|sample_group))
