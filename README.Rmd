@@ -15,7 +15,7 @@ knitr::opts_chunk$set(
 # `ccdf`
 
 [![CRAN status](https://www.r-pkg.org/badges/version/ccdf)](https://CRAN.R-project.org/package=ccdf)
-[![R-CMD-check](https://github.com/Mgauth/ccdf/workflows/R-CMD-check/badge.svg)](https://github.com/Mgauth/ccdf/actions)
+[![R-CMD-check](https://github.com/sistm/ccdf/workflows/R-CMD-check/badge.svg)](https://github.com/sistm/ccdf/actions)
 
 ## Overview
 
@@ -41,7 +41,7 @@ install.packages("ccdf")
 **To install `ccdf`, you can download the development version on [GitHub](https://github.com/Mgauth/ccdf).**
 ```{r GitHub-install, eval=FALSE}
 #install.packages("devtools")
-devtools::install_github("Mgauth/ccdf")
+devtools::install_github("sistm/ccdf")
 ```
 
 

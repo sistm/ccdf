@@ -5,7 +5,7 @@
 
 [![CRAN
 status](https://www.r-pkg.org/badges/version/ccdf)](https://CRAN.R-project.org/package=ccdf)
-[![R-CMD-check](https://github.com/Mgauth/ccdf/workflows/R-CMD-check/badge.svg)](https://github.com/Mgauth/ccdf/actions)
+[![R-CMD-check](https://github.com/sistm/ccdf/workflows/R-CMD-check/badge.svg)](https://github.com/sistm/ccdf/actions)
 
 ## Overview
 
@@ -37,7 +37,7 @@ install.packages("ccdf")
 
 ``` r
 #install.packages("devtools")
-devtools::install_github("Mgauth/ccdf")
+devtools::install_github("sistm/ccdf")
 ```
 
 ## Example
