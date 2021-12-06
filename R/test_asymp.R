@@ -61,8 +61,8 @@ test_asymp <- function(Y, X, Z = NULL, space_y = FALSE, number_y = length(unique
   indexes_X <- which(substring(colnames(modelmat),1,1)=="X")
   p_X <- length(indexes_X)
   
-  beta <- matrix(NA,(n_y_unique-1),p_X)
-  indi_pi <- matrix(NA,n_Y_all,(n_y_unique-1))
+  beta <- matrix(NA, (n_y_unique-1), p_X)
+  indi_pi <- matrix(NA, n_Y_all, (n_y_unique-1))
   
   Phi <- (1/n_Y_all)*(t(modelmat)%*%modelmat)
   H <- (solve(Phi)%*%t(modelmat)) # ginv
@@ -71,9 +71,8 @@ test_asymp <- function(Y, X, Z = NULL, space_y = FALSE, number_y = length(unique
   for (i in 1:(n_y_unique-1)){ # on fait varier le seuil
     indi_Y <- 1*(Y<=y[i])
     indi_pi[,i] <- indi_Y
-    #browser()
-    reg <- lm(indi_Y ~ modelmat[,-1]) # remove intercept
-    beta[i,] <- reg$coefficients[indexes_X]
+    modX_OLS <- modelmat[, c(1, indexes_X), drop=FALSE]
+    beta[i,] <- (solve(crossprod(modX_OLS))  %*% t(modX_OLS) %*% indi_Y)[indexes_X]
   }
   
   beta <- as.vector(beta)
