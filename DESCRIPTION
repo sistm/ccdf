@@ -8,7 +8,7 @@ Authors@R: c(person("Marine", "Gauthier", role = c("aut","cre"),
                     email = "denis.agniel@gmail.com"),
 	           person("Boris P.", "Hejblum", role = c("aut"),
 	                  email = "boris.hejblum@u-bordeaux.fr"))
-Imports: pbapply,parallel,matrixStats,CompQuadForm, RcppNumerical, doParallel, foreach, ggplot2, randomForest, rpart, statmod, viridisLite, survey, cowplot
+Imports: pbapply, parallel, matrixStats, RcppNumerical, doParallel, foreach, ggplot2, randomForest, rpart, statmod, viridisLite, survey, cowplot
 Maintainer: Marine Gauthier <marine.gauthier@u-bordeaux.fr>
 Description: Complex hypothesis testing through conditional cumulative distribution function estimation.
              Method is detailed in: Gauthier M, Agniel D, Thiebaut R & Hejblum BP (2020). 

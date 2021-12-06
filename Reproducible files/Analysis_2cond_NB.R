@@ -10,7 +10,6 @@ library(scran)
 library(scater)
 library(SingleCellExperiment)
 library(doParallel)
-library(CompQuadForm)
 library(ccdf)
 
 ######## Indicators ##########
