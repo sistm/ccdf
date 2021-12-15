@@ -53,13 +53,13 @@ test_asymp <- function(Y, X, Z = NULL, space_y = FALSE, number_y = length(unique
 
   modX_OLS <- modelmat[, c(1, indexes_X), drop = FALSE]
   #Phi <- (1/n_Y_all)*(t(modelmat)%*%modelmat)
+  n_Y_all <- length(Y)
   H <- n_Y_all*(solve(crossprod(modX_OLS)) %*% t(modX_OLS))[indexes_X, , drop=FALSE]
   
   
   # computing the test statistic
   # depends on Y: has to be recomputed for each gene
   Y <- as.numeric(Y) # is this really necessary ??
-  n_Y_all <- length(Y)
   
   if (space_y){
     y <- seq(ifelse(length(which(Y==0))==0,min(Y),min(Y[-which(Y==0)])),max(Y[-which.max(Y)]),length.out=number_y)
@@ -76,7 +76,8 @@ test_asymp <- function(Y, X, Z = NULL, space_y = FALSE, number_y = length(unique
   
   
   # Computing the variance ----  
-
+  
+  indi_pi <- matrix(NA, n_Y_all, (n_y_unique-1))
   for (i in 1:(n_y_unique-1)){ # on fait varier le seuil
     indi_Y <- 1*(Y<=y[i])
     indi_pi[,i] <- indi_Y
