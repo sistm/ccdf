@@ -40,45 +40,45 @@
 test_asymp <- function(Y, X, Z = NULL, sample_group = NULL,
                        method = c("linear regression", "mixed model"),
                        space_y = FALSE, number_y = length(unique(Y))){
-  Y <- as.numeric(Y)
-  n_Y_all <- length(Y)
-
+  # computations independent of Y: should be computed only once before the pbapply loop ----
+  
+  # no covariates Z
+  if (is.null(Z)){ 
+    colnames(X) <- sapply(1:ncol(X), function(i){paste0('X',i)})
+    modelmat <- as.matrix(model.matrix(~.,data=X))
+  }
+  # with covariates Z
+  else{
+    colnames(X) <- sapply(1:ncol(X), function(i){paste0('X',i)})
+    colnames(Z) <- sapply(1:ncol(Z), function(i){paste0('Z',i)})
+    modelmat <- as.matrix(model.matrix(~.,data=cbind(X,Z)))
+  }
+  
+  indexes_X <- which(substring(colnames(modelmat), 1, 1) == "X")
+  
+  modX_OLS <- modelmat[, c(1, indexes_X), drop = FALSE]
+  #Phi <- (1/n_Y_all)*(t(modelmat)%*%modelmat)
+  n_Y_all <- length(Y) # == ncol(modX_OLS) == ncol(X) no?
+  H <- n_Y_all*(solve(crossprod(modX_OLS)) %*% t(modX_OLS))[indexes_X, , drop=FALSE]
+  
+  
+  # computing the test statistic
+  # depends on Y: has to be recomputed for each gene
+  Y <- as.numeric(Y) # is this really necessary ??
+  
   if (space_y){
-    y <- seq(ifelse(length(which(Y == 0)) == 0, 
-                    min(Y),
-                    min(Y[-which(Y == 0)])), 
-             max(Y[-which.max(Y)]), 
-             length.out = number_y)
+    y <- seq(ifelse(length(which(Y==0))==0,min(Y),min(Y[-which(Y==0)])),max(Y[-which.max(Y)]),length.out=number_y)
   }
   else{
     y <- sort(unique(Y))
   }
   n_y_unique <- length(y)
-
-  # no covariates Z
-  if (is.null(Z)){
-    colnames(X) <- sapply(1:ncol(X), function(i){paste0('X', i)})
-    modelmat <- model.matrix(~., data=X)
-  }
-  # with covariates Z
-  else{
-    colnames(X) <- sapply(1:ncol(X), function(i){paste0('X', i)})
-    colnames(Z) <- sapply(1:ncol(Z), function(i){paste0('Z', i)})
-    modelmat <- model.matrix(~., data = cbind(X,Z))
-  }
-
-  indexes_X <- which(substring(colnames(modelmat), 1, 1) == "X")
   
   if(method == "linear regression"){
     
-    # independent of Y: should be computed only once before the pbapply loop
-    modX_OLS <- modelmat[, c(1, indexes_X), drop = FALSE]
-    H <- solve(crossprod(modX_OLS)) %*% t(modX_OLS)
-    
-    # depends on Y: has to be recomputed for each gene
     o <- order(Y)
     index_jumps <- sapply(y[-n_y_unique], function(i){sum(Y[o] <= i)})
-    beta <- cumsum(H[indexes_X, o])[index_jumps]
+    beta <- cumsum(H[, o])[index_jumps] / n_Y_all
     test_stat <- sum(beta^2) * n_Y_all
     
   }else if(method == "mixed model"){
@@ -102,10 +102,14 @@ test_asymp <- function(Y, X, Z = NULL, sample_group = NULL,
     }
 
 
+  # Computing the variance ----  
+  
+  indi_pi <- matrix(NA, n_Y_all, (n_y_unique-1))
+  for (i in 1:(n_y_unique-1)){ # on fait varier le seuil
+    indi_Y <- 1*(Y<=y[i])
+    indi_pi[,i] <- indi_Y
+  }
   prop <- colMeans(indi_pi)
-  Phi <- (1/n_Y_all)*(t(modelmat)%*%modelmat)
-  H <- (solve(Phi)%*%t(modelmat)) # ginv
-  H <- H[indexes_X, , drop=FALSE]
 
   temp_Sigma <-  lapply(1:ncol(H),
                         function(k){sapply(1:nrow(H),
