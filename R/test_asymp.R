@@ -35,16 +35,7 @@
 
 test_asymp <- function(Y, X, Z = NULL, space_y = FALSE, number_y = length(unique(Y))){
   
-  Y <- as.numeric(Y)
-  n_Y_all <- length(Y)
-  
-  if (space_y){
-    y <- seq(ifelse(length(which(Y==0))==0,min(Y),min(Y[-which(Y==0)])),max(Y[-which.max(Y)]),length.out=number_y)
-  }
-  else{
-    y <- sort(unique(Y))
-  }
-  n_y_unique <- length(y)
+  # computations independent of Y: should be computed only once before the pbapply loop ----
   
   # no covariates Z
   if (is.null(Z)){ 
@@ -58,24 +49,38 @@ test_asymp <- function(Y, X, Z = NULL, space_y = FALSE, number_y = length(unique
     modelmat <- as.matrix(model.matrix(~.,data=cbind(X,Z)))
   }
   
-  indexes_X <- which(substring(colnames(modelmat),1,1)=="X")
-  p_X <- length(indexes_X)
+  indexes_X <- which(substring(colnames(modelmat), 1, 1) == "X")
+
+  modX_OLS <- modelmat[, c(1, indexes_X), drop = FALSE]
+  #Phi <- (1/n_Y_all)*(t(modelmat)%*%modelmat)
+  H <- n_Y_all*(solve(crossprod(modX_OLS)) %*% t(modX_OLS))[indexes_X, , drop=FALSE]
   
-  beta <- matrix(NA, (n_y_unique-1), p_X)
-  indi_pi <- matrix(NA, n_Y_all, (n_y_unique-1))
   
-  Phi <- (1/n_Y_all)*(t(modelmat)%*%modelmat)
-  H <- (solve(Phi)%*%t(modelmat)) # ginv
-  H <- H[indexes_X, , drop=FALSE]
+  # computing the test statistic
+  # depends on Y: has to be recomputed for each gene
+  Y <- as.numeric(Y) # is this really necessary ??
+  n_Y_all <- length(Y)
   
-  modX_OLS <- modelmat[, c(1, indexes_X), drop=FALSE]
+  if (space_y){
+    y <- seq(ifelse(length(which(Y==0))==0,min(Y),min(Y[-which(Y==0)])),max(Y[-which.max(Y)]),length.out=number_y)
+  }
+  else{
+    y <- sort(unique(Y))
+  }
+  n_y_unique <- length(y)
+  
+  o <- order(Y)
+  index_jumps <- sapply(y[-n_y_unique], function(i){sum(Y[o] <= i)})
+  beta <- cumsum(H[, o])[index_jumps] / n_Y_all
+  test_stat <- sum(beta^2) * n_Y_all
+  
+  
+  # Computing the variance ----  
+
   for (i in 1:(n_y_unique-1)){ # on fait varier le seuil
     indi_Y <- 1*(Y<=y[i])
     indi_pi[,i] <- indi_Y
-    beta[i,] <- (solve(crossprod(modX_OLS))  %*% t(modX_OLS) %*% indi_Y)[indexes_X]
   }
-  
-  beta <- as.vector(beta)
   prop <- colMeans(indi_pi)
   
   temp_Sigma <-  lapply(1:ncol(H), 
@@ -89,6 +94,7 @@ test_asymp <- function(Y, X, Z = NULL, space_y = FALSE, number_y = length(unique
   if(is.null(dim(sum_temp_Sigma))){
     sum_temp_Sigma <- matrix(sum_temp_Sigma)
   }
+  p_X <- length(indexes_X)
   ind_sig <- rep(1:(n_y_unique-1), p_X)
   
   Sigma <- matrix(data = NA, nrow = (n_y_unique-1)*p_X, 
@@ -101,9 +107,8 @@ test_asymp <- function(Y, X, Z = NULL, space_y = FALSE, number_y = length(unique
   
   decomp <- eigen(Sigma)
   
-  z <- (sqrt(n_Y_all))*beta
-  test_stat <- sum(t(z)*z)
   
+  # computing the pvalue ----
   pval <- survey::pchisqsum(test_stat, lower.tail = FALSE, df = rep(1,ncol(Sigma)), 
                             a = decomp$values, method = "saddlepoint")
   
