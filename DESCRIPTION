@@ -1,7 +1,7 @@
 Package: ccdf
 Type: Package
 Title: Distribution-Free Single-Cell Differential Expression Analysis
-Version: 1.1.4 
+Version: 1.1.5
 Authors@R: c(person("Marine", "Gauthier", role = c("aut","cre"),
 	                  email = "marine.gauthier@u-bordeaux.fr"),
 	           person("Denis", "Agniel", role = c("aut"),
