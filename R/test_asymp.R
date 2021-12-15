@@ -68,10 +68,10 @@ test_asymp <- function(Y, X, Z = NULL, space_y = FALSE, number_y = length(unique
   H <- (solve(Phi)%*%t(modelmat)) # ginv
   H <- H[indexes_X, , drop=FALSE]
   
+  modX_OLS <- modelmat[, c(1, indexes_X), drop=FALSE]
   for (i in 1:(n_y_unique-1)){ # on fait varier le seuil
     indi_Y <- 1*(Y<=y[i])
     indi_pi[,i] <- indi_Y
-    modX_OLS <- modelmat[, c(1, indexes_X), drop=FALSE]
     beta[i,] <- (solve(crossprod(modX_OLS))  %*% t(modX_OLS) %*% indi_Y)[indexes_X]
   }
   
