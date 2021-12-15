@@ -37,12 +37,18 @@
 #'res_asymp <- test_asymp(Y,data.frame(X=X))
 
 
-test_asymp <- function(Y, X, Z = NULL, sample_group=NULL,method=c("linear regression", "mixed model"),space_y = FALSE, number_y = length(unique(Y))){
+test_asymp <- function(Y, X, Z = NULL, sample_group = NULL,
+                       method = c("linear regression", "mixed model"),
+                       space_y = FALSE, number_y = length(unique(Y))){
   Y <- as.numeric(Y)
   n_Y_all <- length(Y)
 
   if (space_y){
-    y <- seq(ifelse(length(which(Y==0))==0,min(Y),min(Y[-which(Y==0)])),max(Y[-which.max(Y)]),length.out=number_y)
+    y <- seq(ifelse(length(which(Y == 0)) == 0, 
+                    min(Y),
+                    min(Y[-which(Y == 0)])), 
+             max(Y[-which.max(Y)]), 
+             length.out = number_y)
   }
   else{
     y <- sort(unique(Y))
@@ -51,43 +57,38 @@ test_asymp <- function(Y, X, Z = NULL, sample_group=NULL,method=c("linear regres
 
   # no covariates Z
   if (is.null(Z)){
-    colnames(X) <- sapply(1:ncol(X), function(i){paste0('X',i)})
-    modelmat <- as.matrix(model.matrix(~.,data=X))
+    colnames(X) <- sapply(1:ncol(X), function(i){paste0('X', i)})
+    modelmat <- model.matrix(~., data=X)
   }
   # with covariates Z
   else{
-    colnames(X) <- sapply(1:ncol(X), function(i){paste0('X',i)})
-    colnames(Z) <- sapply(1:ncol(Z), function(i){paste0('Z',i)})
-    modelmat <- as.matrix(model.matrix(~.,data=cbind(X,Z)))
+    colnames(X) <- sapply(1:ncol(X), function(i){paste0('X', i)})
+    colnames(Z) <- sapply(1:ncol(Z), function(i){paste0('Z', i)})
+    modelmat <- model.matrix(~., data = cbind(X,Z))
   }
 
-  indexes_X <- which(substring(colnames(modelmat),1,1)=="X")
-  p_X <- length(indexes_X)
-
-  beta <- matrix(NA, (n_y_unique-1), p_X)
-  indi_pi <- matrix(0, n_Y_all, (n_y_unique-1))
-
+  indexes_X <- which(substring(colnames(modelmat), 1, 1) == "X")
+  
   if(method == "linear regression"){
-    index_one <- cumsum(sapply(sort(unique(Y)),
-                               function(elmt, vec) sum(vec == elmt),
-                               vec = sort(Y)))[-length(unique(Y))]
-
-    ix <- sort(Y, index.return = TRUE)$ix
-    indi_pi <- as.matrix(setNames(data.frame(lapply(1:(n_y_unique-1),
-                                                    function(i)
-                                                      replace(indi_pi[, i], ix[1:index_one[i]],
-                                                              rep(1, length(ix[1:index_one[i]]))))),
-                                  head(names(indi_pi), -1)))
-
+    
+    # independent of Y: should be computed only once before the pbapply loop
     modX_OLS <- modelmat[, c(1, indexes_X), drop = FALSE]
-    beta <- solve(crossprod(modX_OLS)) %*% t(modX_OLS) %*% indi_pi
-    test_stat <- sum(as.matrix(beta)[indexes_X,]^2) * n_Y_all
+    H <- solve(crossprod(modX_OLS)) %*% t(modX_OLS)
+    
+    # depends on Y: has to be recomputed for each gene
+    o <- order(Y)
+    index_jumps <- sapply(y[-n_y_unique], function(i){sum(Y[o] <= i)})
+    beta <- cumsum(H[indexes_X, o])[index_jumps]
+    test_stat <- sum(beta^2) * n_Y_all
+    
   }else if(method == "mixed model"){
       if(is.null(sample_group)) {
         warning("sample_group is null",
                 "No random effects terms specified in formula")
       }else {
-        for (i in 1:(n_y_unique-1)){ # on fait varier le seuil
+        p_X <- length(indexes_X)
+        beta <- matrix(NA, (n_y_unique-1), p_X)
+        for (i in 1:(n_y_unique-1)){ # varying threshold
           indi_Y <- 1*(Y<=y[i])
           indi_pi[,i] <- indi_Y
           mod_mixed <- lmer(indi_Y ~ 1 + modelmat[, -1] + (1 | sample_group))
@@ -130,7 +131,7 @@ test_asymp <- function(Y, X, Z = NULL, sample_group=NULL,method=c("linear regres
   decomp <- eigen(Sigma)
 
 
-  pval <- survey::pchisqsum(test_stat, lower.tail = FALSE, df = rep(1,ncol(Sigma)),
+  pval <- survey::pchisqsum(test_stat, lower.tail = FALSE, df = rep(1, ncol(Sigma)),
                             a = decomp$values, method = "saddlepoint")
 
   return(data.frame("raw_pval" = pval, "Stat" = test_stat))
