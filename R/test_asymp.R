@@ -80,30 +80,11 @@ test_asymp <- function(Y, X, Z = NULL, space_y = FALSE, number_y = length(unique
   }
   prop <- colMeans(indi_pi)
   
-  temp_Sigma <-  lapply(1:ncol(H), 
-                        function(k){sapply(1:nrow(H), 
-                                           function(s){sapply(1:nrow(H), 
-                                                              function(r){H[s,k]*H[r,k]}
-                                           )}
-                        )}
-  )
-  sum_temp_Sigma <- Reduce(f = `+`, x = temp_Sigma)
-  if(is.null(dim(sum_temp_Sigma))){
-    sum_temp_Sigma <- matrix(sum_temp_Sigma)
-  }
-  p_X <- length(indexes_X)
-  ind_sig <- rep(1:(n_y_unique-1), p_X)
-  
-  Sigma <- matrix(data = NA, nrow = (n_y_unique-1)*p_X, 
-                  ncol = (n_y_unique-1)*p_X)
-  for (i in 1:((n_y_unique-1)*p_X)){
-    for (j in 1:i){
-      Sigma[i,j] <- Sigma[j,i] <- (1/n_Y_all)*sum_temp_Sigma[floor(i/(n_y_unique)+1),floor(j/(n_y_unique)+1)]*(prop[ind_sig[j]]-(prop[ind_sig[j]]*prop[ind_sig[i]]))
-    }
-  }
-  
-  decomp <- eigen(Sigma)
-  
+
+  Sigma2 <- 1/ n_Y_all * tcrossprod(H) %x% (prop - prop %x% t(prop))
+  Sigma <- Sigma2*upper.tri(Sigma2, diag = TRUE) +  t(Sigma2*upper.tri(Sigma2, diag = FALSE))
+
+  decomp <- eigen(Sigma, symmetric=TRUE, only.values=TRUE)
   
   # computing the pvalue ----
   pval <- survey::pchisqsum(test_stat, lower.tail = FALSE, df = rep(1,ncol(Sigma)), 
