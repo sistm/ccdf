@@ -51,11 +51,8 @@ test_asymp <- function(Y, X, Z = NULL, space_y = FALSE, number_y = length(unique
   
   indexes_X <- which(substring(colnames(modelmat), 1, 1) == "X")
 
-  modX_OLS <- modelmat[, c(1, indexes_X), drop = FALSE]
-  #Phi <- (1/n_Y_all)*(t(modelmat)%*%modelmat)
   n_Y_all <- length(Y)
-  H <- n_Y_all*(solve(crossprod(modX_OLS)) %*% t(modX_OLS))[indexes_X, , drop=FALSE]
-  
+  H <- n_Y_all*(solve(crossprod(modelmat)) %*% t(modelmat))[indexes_X, , drop=FALSE]
   
   # computing the test statistic
   # depends on Y: has to be recomputed for each gene
@@ -69,9 +66,8 @@ test_asymp <- function(Y, X, Z = NULL, space_y = FALSE, number_y = length(unique
   }
   n_y_unique <- length(y)
   
-  o <- order(Y)
-  index_jumps <- sapply(y[-n_y_unique], function(i){sum(Y[o] <= i)})
-  beta <- cumsum(H[, o])[index_jumps] / n_Y_all
+  index_jumps <- sapply(y[-p], function(i){sum(Y <= i)})
+  beta <- c(apply(X = H[, order(Y)], MARGIN = 1, FUN = cumsum)[index_jumps, ]) / n_Y_all #sandbox
   test_stat <- sum(beta^2) * n_Y_all
   
   
