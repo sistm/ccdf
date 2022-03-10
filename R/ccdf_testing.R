@@ -33,12 +33,12 @@
 #'@param n_perm_adaptive a vector of the increasing numbers of 
 #'adaptive permutations when \code{adaptive} is \code{TRUE}. 
 #'\code{length(n_perm_adaptive)} should be equal to \code{length(thresholds)+1}. 
-#'Default is \code{c(0.1,0.05,0.01)}.
+#'Default is \code{c(100,150,250,500)}.
 #'
 #'@param thresholds a vector of the decreasing thresholds to compute
 #'adaptive permutations when \code{adaptive} is \code{TRUE}. 
-#'\code{length(thresholds)} should be equal to \code{length(n_perm_adaptive)-1}. 
-#'Default is \code{c(100,150,250,500)}.
+#'\code{length(thresholds)} should be equal to \code{length(n_perm_adaptive)-1}.
+#'Default is \code{c(0.1,0.05,0.01)}.
 #'
 #'@param distance a character string indicating which distance to use to
 #'compute the test, either \code{'L2'}, \code{'L1'} or 
@@ -48,9 +48,9 @@
 #'@param parallel a logical flag indicating whether parallel computation
 #'should be enabled. Default is \code{TRUE}.
 #'
-#'@param n_cpus an integer indicating the number of cores to be used when
-#'\code{parallel} is \code{TRUE}.
-#'Default is \code{parallel::detectCores() - 1}.
+#'@param n_cpus an integer indicating the number of cores to be used for the computations.
+#'Default is \code{parallel::detectCores() - 1}. If \code{n_cpus = 1}, then sequential 
+#'computations are used without any parallelization.
 #'
 #'@param space_y a logical flag indicating whether the y thresholds are spaced. 
 #'When \code{space_y} is \code{TRUE}, a regular sequence between the minimum and 
@@ -87,11 +87,20 @@
 #'
 #'@examples
 #' 
-#'X <- as.factor(rbinom(n=100, size = 1, prob = 0.5))
-#'Y <- t(replicate(10, ((X==1)*rnorm(n = 50,0,1)) + ((X==0)*rnorm(n = 50,0.5,1))))
+#'ncells <- 100
+#'pgenes <- 500
+#'X1 <- as.factor(rbinom(n=ncells, size = 1, prob = 0.5))
+#'Y <- t(replicate(pgenes, ((X1==1)*rnorm(n = ncells,0,1)) + ((X1==0)*rnorm(n = ncells, 0.5, 1))))
+#'X2 <- rnorm(n=ncells)
+#'X3 <- rnorm(n=ncells)
+#'Z1 <- rnorm(ncells)
+#'Z2 <- as.factor(rbinom(n=ncells, size=1, prob = 0.5))
+#'
 #'res_asymp <- ccdf_testing(exprmat=data.frame(Y=Y), 
-#'variable2test=data.frame(X=X), test="asymptotic",
-#'n_cpus=1)$pvals # asymptotic test
+#'variable2test=data.frame(X1=X3, X2 = X2), 
+#'covariate = data.frame(Z1 = Z1, Z2 = Z2),
+#'test="asymptotic", n_cpus=1, parallel=FALSE)
+#'hist(res_asymp$pvals$raw_pval) # asymptotic test
 
 
 ccdf_testing <- function(exprmat = NULL,
