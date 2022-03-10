@@ -59,24 +59,24 @@ test_asymp <- function(Y, X, Z = NULL, space_y = FALSE, number_y = length(unique
   Y <- as.numeric(Y) # is this really necessary ??
   
   if (space_y){
-    y <- seq(ifelse(length(which(Y==0))==0,min(Y),min(Y[-which(Y==0)])),max(Y[-which.max(Y)]),length.out=number_y)
+    y <- seq(from = ifelse(length(which(Y==0))==0, min(Y), min(Y[-which(Y==0)])),
+             to = max(Y[-which.max(Y)]), length.out = number_y)
   }
   else{
     y <- sort(unique(Y))
   }
-  n_y_unique <- length(y)
+  p <- length(y) #number of thresholds used
   
   index_jumps <- sapply(y[-p], function(i){sum(Y <= i)})
   beta <- c(apply(X = H[, order(Y)], MARGIN = 1, FUN = cumsum)[index_jumps, ]) / n_Y_all #sandbox
   test_stat <- sum(beta^2) * n_Y_all
   
-  
   # Computing the variance ----  
   
-  indi_pi <- matrix(NA, n_Y_all, (n_y_unique-1))
-  for (i in 1:(n_y_unique-1)){ # on fait varier le seuil
-    indi_Y <- 1*(Y<=y[i])
-    indi_pi[,i] <- indi_Y
+  indi_pi <- matrix(NA, n_Y_all, (p-1))
+  for (j in 1:(p-1)){ # on fait varier le seuil
+    indi_Y <- 1*(Y<=y[j])
+    indi_pi[,j] <- indi_Y
   }
   prop <- colMeans(indi_pi)
   
@@ -87,7 +87,7 @@ test_asymp <- function(Y, X, Z = NULL, space_y = FALSE, number_y = length(unique
   decomp <- eigen(Sigma, symmetric=TRUE, only.values=TRUE)
   
   # computing the pvalue ----
-  pval <- survey::pchisqsum(test_stat, lower.tail = FALSE, df = rep(1,ncol(Sigma)), 
+  pval <- survey::pchisqsum(test_stat, lower.tail = FALSE, df = rep(1, ncol(Sigma)), 
                             a = decomp$values, method = "saddlepoint")
   
   return(data.frame("raw_pval" = pval, "Stat" = test_stat))
