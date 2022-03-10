@@ -1,6 +1,5 @@
+# ccdf 1.2
+ * faster computations
+
 # ccdf 1.1.4
-
-# News about the `ccdf` R package
-
-### Version 1.1.4 (2021-09-24):
-*  CRAN version
+ * first CRAN release

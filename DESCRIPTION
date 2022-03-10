@@ -1,12 +1,12 @@
 Package: ccdf
 Type: Package
 Title: Distribution-Free Single-Cell Differential Expression Analysis
-Version: 1.1.4
-Authors@R: c(person("Marine", "Gauthier", role = c("aut","cre"),
+Version: 1.2
+Authors@R: c(person("Marine", "Gauthier", role = c("aut"),
 	                  email = "marine.gauthier@u-bordeaux.fr"),
 	           person("Denis", "Agniel", role = c("aut"),
                     email = "denis.agniel@gmail.com"),
-	           person("Boris P.", "Hejblum", role = c("aut"),
+	           person("Boris P.", "Hejblum", role = c("aut", "cre"),
 	                  email = "boris.hejblum@u-bordeaux.fr"))
 Imports: pbapply, parallel, matrixStats, RcppNumerical, doParallel, foreach, ggplot2, randomForest, rpart, statmod, viridisLite, survey, cowplot
 Maintainer: Marine Gauthier <marine.gauthier@u-bordeaux.fr>
