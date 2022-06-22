@@ -18,8 +18,8 @@ ccdf_testing(
   parallel = TRUE,
   n_cpus = NULL,
   adaptive = FALSE,
-  space_y = FALSE,
-  number_y = ncol(exprmat)
+  space_y = TRUE,
+  number_y = 10
 )
 }
 \arguments{
@@ -77,10 +77,11 @@ should be performed. Default is \code{FALSE}.}
 
 \item{space_y}{a logical flag indicating whether the y thresholds are spaced. 
 When \code{space_y} is \code{TRUE}, a regular sequence between the minimum and 
-the maximum of the observations is used. Default is \code{FALSE}.}
+the maximum of the observations is used. If \code{FALSE}, each unique 
+observed expression value is used as a distinct threshold. Default is \code{TRUE}.}
 
 \item{number_y}{an integer value indicating the number of y thresholds (and therefore
-the number of regressions) to perform the test. Default is \code{ncol(exprmat)}.}
+the number of regressions) to perform the test. Default is 10.}
 }
 \value{
 A list with the following elements:\itemize{
@@ -102,7 +103,7 @@ Main function to perform complex hypothesis testing using (un)conditional indepe
 \examples{
 
 ncells <- 100
-pgenes <- 500
+pgenes <- 5000
 X1 <- as.factor(rbinom(n=ncells, size = 1, prob = 0.5))
 Y <- t(replicate(pgenes, ((X1==1)*rnorm(n = ncells,0,1)) + ((X1==0)*rnorm(n = ncells, 0.5, 1))))
 X2 <- rnorm(n=ncells)

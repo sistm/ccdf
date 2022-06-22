@@ -67,7 +67,7 @@ test_asymp <- function(Y, X, Z = NULL, space_y = FALSE, number_y = length(unique
   p <- length(y) #number of thresholds used
   
   index_jumps <- sapply(y[-p], function(i){sum(Y <= i)})
-  beta <- c(apply(X = H[, order(Y), drop=FALSE], MARGIN = 1, FUN = cumsum)[index_jumps, ]) / n_Y_all #sandbox
+  beta <- c(apply(X = H[, order(Y), drop=FALSE], MARGIN = 1, FUN = cumsum)[index_jumps, ]) / n_Y_all
   test_stat <- sum(beta^2) * n_Y_all
   
   # Computing the variance ----  
