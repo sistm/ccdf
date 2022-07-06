@@ -45,8 +45,9 @@ sample_mat_NBP <- function(n_G,n){
     set.seed(seeds[i])
     if (i<=250){ # DE
       
-      Y[i,] <- c(rbinom(n = n/2, size = 1, p=prop_non_0)*rnbinom(n/2,prob=0.5,size=moy1[i]),
-                 rbinom(n = n/2, size = 1, p=prop_non_0)*rnbinom(n/2,prob=0.5,size=moy3[i]))
+      Y[i,] <- c(rnbinom(n/2,prob=0.5,size=moy1[i]),
+                 rnbinom(n/2,prob=0.5,size=moy3[i]))
+      Y[i,] <- Y[i,] * rbinom(n = n, size = 1, p=prop_non_0)
     }
     
     if (i<=500 & i>250){ # DM
@@ -54,10 +55,10 @@ sample_mat_NBP <- function(n_G,n){
       bimod <- rep(0,n/2)
       unimod <- rep(0,n/2)
       
-      bimod[1:p[i]] <- c(rbinom(n = floor(length(1:p[i])), size = 1, p=prop_non_0)*rnbinom(floor(length(1:p[i])),prob=0.5,size=moy1[i]))
-      bimod[(p[i]+1):(n/2)] <- c(rbinom(n = floor(length((p[i]+1):(n/2))), size = 1, p=prop_non_0)*rnbinom(floor(length((p[i]+1):(n/2))),prob=0.5,size=moy2[i]))
-      unimod <- c(rbinom(n = n/2, size = 1, p=prop_non_0)*rnbinom(n/2,prob=0.5,size=moy2[i]))
-      Y[i,] <- c(unimod,bimod)
+      bimod[1:p[i]] <- rnbinom(floor(length(1:p[i])), prob=0.5, size=moy1[i])
+      bimod[(p[i]+1):(n/2)] <- rnbinom(floor(length((p[i]+1):(n/2))),prob=0.5,size=moy2[i])
+      unimod <- rnbinom(n/2,prob=0.5,size=moy2[i])
+      Y[i,] <- c(unimod,bimod) * rbinom(n = n, size = 1, p=prop_non_0)
       
     }
     
@@ -66,13 +67,13 @@ sample_mat_NBP <- function(n_G,n){
       bimod1 <- rep(0,n/2)
       bimod2 <- rep(0,n/2)
       
-      bimod1[1:p1[i]] <- c(rbinom(n = length(1:p1[i]), size = 1, p=prop_non_0)*rnbinom(length(1:p1[i]),prob=0.5,size=moy1[i]))
-      bimod1[(p1[i]+1):(n/2)] <- c(rbinom(n = length((p1[i]+1):(n/2)), size = 1, p=prop_non_0)*rnbinom(length((p1[i]+1):(n/2)),prob=0.5,size=moy2[i]))
+      bimod1[1:p1[i]] <- rnbinom(length(1:p1[i]),prob=0.5,size=moy1[i])
+      bimod1[(p1[i]+1):(n/2)] <- rnbinom(length((p1[i]+1):(n/2)),prob=0.5,size=moy2[i])
       
-      bimod2[1:p2[i]] <- c(rbinom(n = length(1:p2[i]), size = 1, p=prop_non_0)*rnbinom(length(1:p2[i]),prob=0.5,size=moy1[i]))
-      bimod2[(p2[i]+1):(n/2)] <- c(rbinom(n = length((p2[i]+1):(n/2)), size = 1, p=prop_non_0)*rnbinom(length((p2[i]+1):(n/2)),prob=0.5,size=moy2[i]))
+      bimod2[1:p2[i]] <- rnbinom(length(1:p2[i]),prob=0.5,size=moy1[i])
+      bimod2[(p2[i]+1):(n/2)] <- rnbinom(length((p2[i]+1):(n/2)),prob=0.5,size=moy2[i])
       
-      Y[i,] <- c(bimod1,bimod2)
+      Y[i,] <- c(bimod1,bimod2) * rbinom(n = n, size = 1, p=prop_non_0)
     }
     
     if (i<=2000 & i>750){ # DB
@@ -80,17 +81,16 @@ sample_mat_NBP <- function(n_G,n){
       bimod <- rep(0,n/2)
       unimod <- rep(0,n/2)
       
-      bimod[1:p[i]] <- c(rbinom(n = length(1:p[i]), size = 1, p=prop_non_0)*rnbinom(length(1:p[i]),prob=0.5,size=moy1[i]))
-      bimod[(p[i]+1):(n/2)] <- c(rbinom(n = length((p[i]+1):(n/2)), size = 1, p=prop_non_0)*rnbinom(length((p[i]+1):(n/2)),prob=0.5,size=moy2[i]))
-      unimod <- c(rbinom(n = n/2, size = 1, p=prop_non_0)*rnbinom(n/2,prob=0.5,size=moy3[i]))
-      Y[i,] <- c(unimod,bimod)
+      bimod[1:p[i]] <- rnbinom(length(1:p[i]),prob=0.5,size=moy1[i])
+      bimod[(p[i]+1):(n/2)] <-rnbinom(length((p[i]+1):(n/2)),prob=0.5,size=moy2[i])
+      unimod <- rnbinom(n/2,prob=0.5,size=moy3[i])
+      Y[i,] <- c(unimod,bimod) * rbinom(n = n, size = 1, p=prop_non_0)
       
     }
     
     if (i<=5500 & i>1000){
       
-      Y[i,] <- c(rbinom(n = n/2, size = 1, p=prop_non_0)*rnbinom(n/2,prob=0.5,size=moy1[i]),
-                 rbinom(n = n/2, size = 1, p=prop_non_0)*rnbinom(n/2,prob=0.5,size=moy1[i]))
+      Y[i,] <- rbinom(n = n, size = 1, p=prop_non_0) * rnbinom(n,prob=0.5,size=moy1[i])
       
     }
     
@@ -99,13 +99,13 @@ sample_mat_NBP <- function(n_G,n){
       bimod1 <- rep(0,n/2)
       bimod2 <- rep(0,n/2)
       
-      bimod1[1:p[i]] <- c(rbinom(n = length(1:p[i]), size = 1, p=prop_non_0)*rnbinom(length(1:p[i]),prob=0.5,size=moy1[i]))
-      bimod1[(p[i]+1):(n/2)] <-   c(rbinom(n = length((p[i]+1):(n/2)), size = 1, p=prop_non_0)*rnbinom(length((p[i]+1):(n/2)),prob=0.5,size=moy2[i]))
+      bimod1[1:p[i]] <- rnbinom(length(1:p[i]),prob=0.5,size=moy1[i])
+      bimod1[(p[i]+1):(n/2)] <-   rnbinom(length((p[i]+1):(n/2)),prob=0.5,size=moy2[i])
       
-      bimod2[1:p[i]] <- c(rbinom(n = length(1:p[i]), size = 1, p=prop_non_0)*rnbinom(length(1:p[i]),prob=0.5,size=moy1[i]))
-      bimod2[(p[i]+1):(n/2)] <-  c(rbinom(n = length((p[i]+1):(n/2)), size = 1, p=prop_non_0)*rnbinom(length((p[i]+1):(n/2)),prob=0.5,size=moy2[i]))
+      bimod2[1:p[i]] <- rnbinom(length(1:p[i]),prob=0.5,size=moy1[i])
+      bimod2[(p[i]+1):(n/2)] <-  rnbinom(length((p[i]+1):(n/2)),prob=0.5,size=moy2[i])
       
-      Y[i,] <- c(bimod1,bimod2)
+      Y[i,] <- c(bimod1,bimod2)* rbinom(n = n, size = 1, p=prop_non_0)
       
     }
   }
