@@ -61,9 +61,6 @@
 #'the number of regressions) to perform the test. Default is 10.
 #'
 #'
-#'
-#'@import foreach
-#'@import doParallel
 #'@import pbapply
 #'
 #'
@@ -104,6 +101,8 @@
 #'hist(res_asymp$pvals$raw_pval) # asymptotic test
 
 
+
+
 ccdf_testing <- function(exprmat = NULL,
                          variable2test = NULL,
                          covariate = NULL,
@@ -112,7 +111,7 @@ ccdf_testing <- function(exprmat = NULL,
                          method = c("linear regression","logistic regression","RF"),
                          fast = TRUE,
                          n_perm = 100,
-                         n_perm_adaptive = c(100,150,250,500),
+                         n_perm_adaptive = c(n_perm, n_perm, n_perm*3, n_perm*5),
                          thresholds = c(0.1,0.05,0.01),
                          parallel = TRUE,
                          n_cpus = NULL,
@@ -171,7 +170,7 @@ ccdf_testing <- function(exprmat = NULL,
     if (adaptive){
       if ((length(n_perm_adaptive)!=(length(thresholds)+1))){
         warning("length of thresholds + 1 must be equal to length of n_perm_adaptive. \n",
-              "Consider using the default parameters.")
+                "Consider using the default parameters.")
       }
     }
     
@@ -201,11 +200,9 @@ ccdf_testing <- function(exprmat = NULL,
     if(is.null(n_cpus)){
       n_cpus <- parallel::detectCores() - 1
     }
-    cl <- parallel::makeCluster(n_cpus)
-    doParallel::registerDoParallel(cl)
   }
   else{
-    cl <- 1
+    n_cpus <- 1
   }
   
   # test
@@ -213,16 +210,14 @@ ccdf_testing <- function(exprmat = NULL,
   if (test=="dist_permutations"){
     
     if (adaptive==TRUE){
-
-      print(paste("Computing", n_perm_adaptive[1], "permutations..."))
+      
+      message(paste("Computing", n_perm_adaptive[1], "permutations..."))
       
       res <- pbapply::pbsapply(1:nrow(exprmat), FUN=function(i){permut(
         Y = exprmat[i,],
         X = variable2test,
         Z = covariate,
-        n_perm = n_perm_adaptive[1],
-        parallel = TRUE,
-        n_cpus = n_cpus)$score},cl=1)
+        n_perm = n_perm_adaptive[1])$score},cl=n_cpus)
       perm <- rep(n_perm_adaptive[1],nrow(exprmat))
       
       for (k in 1:length(thresholds)){
@@ -232,30 +227,29 @@ ccdf_testing <- function(exprmat = NULL,
         if (length(unique(((res+1)/(perm+1))<thresholds[k]))==1 & unique(((res+1)/(perm+1))<thresholds[k])==FALSE){
           break
         }
-
+        
         else{
           
-          print(paste("Computing", sum(n_perm_adaptive[1:(k+1)]), "permutations..."))
+          message(paste("Computing", sum(n_perm_adaptive[1:(k+1)]), "permutations..."))
           res_perm <- pbapply::pbsapply(1:nrow(exprmat[index,]), FUN=function(i){permut(
             Y = exprmat[index,][i,],
             X = variable2test,
             Z = covariate,
-            n_perm = n_perm_adaptive[k+1],
-            parallel = parallel,
-            n_cpus = n_cpus)$score},cl=1)
+            n_perm = n_perm_adaptive[k+1])$score},
+            cl=1)
           res[index] <- res[index] + res_perm
           perm[index] <- perm[index] + rep(n_perm_adaptive[k+1],nrow(exprmat[index,]))
         }
         
       }
-      
-      df <- data.frame(raw_pval = (res+1)/(perm+1),
-                       adj_pval = p.adjust((res+1)/(perm+1), method = "BH"))
+      pvals <- (res+1)/(perm+1)
+      df <- data.frame(raw_pval = pvals,
+                       adj_pval = p.adjust(pvals, method = "BH"))
     }
     
     else{
       
-      print(paste("Computing", n_perm, "permutations..."))
+      message(paste("Computing", n_perm, "permutations..."))
       
       res <- pbapply::pbsapply(1:nrow(exprmat), FUN=function(i){permut(
         Y = exprmat[i,],
@@ -264,8 +258,6 @@ ccdf_testing <- function(exprmat = NULL,
         distance=distance,
         n_perm = n_perm,
         method = method,
-        parallel = parallel,
-        n_cpus = n_cpus,
         fast = fast)$pval},cl=1)
       
       
@@ -281,59 +273,56 @@ ccdf_testing <- function(exprmat = NULL,
   else if (test=="permutations"){
     
     if (adaptive==TRUE){
-
-      print(paste("Computing", n_perm_adaptive[1], "permutations..."))
+      
+      message(paste("Computing", n_perm_adaptive[1], "permutations..."))
       res <- pbapply::pbsapply(1:nrow(exprmat), FUN=function(i){test_perm(
         Y = exprmat[i,],
         X = variable2test,
         Z = covariate,
         n_perm = n_perm_adaptive[1],
-        parallel = FALSE,
-        n_cpus = 1,
         space_y = space_y, 
         number_y = number_y)$score},cl=n_cpus)
       perm <- rep(n_perm_adaptive[1],nrow(exprmat))
       
       k <- 2
-      index <- which(((res+1)/(perm+1))<thresholds[k-1])
+      index <- which((res+1)/(perm+1) <= thresholds[k-1])
       
       while (length(index)!=0 & k<=length(n_perm_adaptive)){
         
-        index <- which(((res+1)/(perm+1))<thresholds[k-1])
-
-        print(paste("Computing", sum(n_perm_adaptive[1:k]), "permutations..."))
-          
-        res_perm <- pbapply::pbsapply(1:nrow(exprmat[index,]), FUN=function(i){test_perm(
-            Y = exprmat[index,][i,],
-            X = variable2test,
-            Z = covariate,
-            n_perm = n_perm_adaptive[k],
-            parallel = FALSE,
-            n_cpus = 1,
-            space_y = space_y, 
-            number_y = number_y)$score},cl=n_cpus)
-          res[index] <- res[index] + res_perm
-          perm[index] <- perm[index] + rep(n_perm_adaptive[k],nrow(exprmat[index,]))
-          k <- k+1
-
-        }
+        index <- which(((res+1)/(perm+1)) < thresholds[k-1])
+        
+        message(paste("Computing", sum(n_perm_adaptive[k]), "additional permutations..."))
+        
+        res_perm <- pbapply::pbsapply(1:length(index), FUN=function(i){test_perm(
+          Y = exprmat[index[i], ],
+          X = variable2test,
+          Z = covariate,
+          n_perm = n_perm_adaptive[k],
+          space_y = space_y, 
+          number_y = number_y)$score}, 
+          cl = n_cpus)
+        res[index] <- res[index] + res_perm
+        perm[index] <- perm[index] + rep(n_perm_adaptive[k], length(index))
+        k <- k+1
+        
+      }
       
-      df <- data.frame(raw_pval = (res+1)/(perm+1),
-                       adj_pval = p.adjust((res+1)/(perm+1), method = "BH"))
+      pvals <- (res+1)/(perm+1)
+      df <- data.frame(raw_pval = pvals,
+                       adj_pval = p.adjust(pvals, method = "BH"))
     }
     
     else{
       
-      print(paste("Computing", n_perm, "permutations..."))
+      message(paste("Computing", n_perm, "permutations..."))
       res <- do.call("rbind",pbapply::pblapply(1:nrow(exprmat), FUN=function(i){
         test_perm(Y = exprmat[i,],
                   X = variable2test,
                   Z = covariate,
                   n_perm = n_perm,
-                  parallel = FALSE,
-                  n_cpus = 1,
                   space_y = space_y, 
-                  number_y = number_y)},cl=n_cpus))
+                  number_y = number_y)},
+        cl=n_cpus))
       
       #res <- as.vector(unlist(res))
       
@@ -363,10 +352,6 @@ ccdf_testing <- function(exprmat = NULL,
   
   if (test == "asymptotic"){
     n_perm <- NA
-  }
-  
-  if (parallel){
-    parallel::stopCluster(cl)
   }
   
   return(list(which_test = test,

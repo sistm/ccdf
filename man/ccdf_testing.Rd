@@ -116,6 +116,17 @@ variable2test=data.frame(X1=X3, X2 = X2),
 covariate = data.frame(Z1 = Z1, Z2 = Z2),
 test="asymptotic", n_cpus=1, parallel=FALSE)
 hist(res_asymp$pvals$raw_pval) # asymptotic test
+
+ncells <- 50
+pgenes <- 100
+X1 <- as.factor(rbinom(n=ncells, size = 1, prob = 0.5))
+Y <- t(replicate(pgenes, ((X1==1)*rnorm(n = ncells,0,1)) + ((X1==0)*rnorm(n = ncells, 0.5, 1))))
+X2 <- rnorm(n=ncells)
+X3 <- rnorm(n=ncells)
+
+res <- ccdf_testing(exprmat=data.frame(Y=Y), 
+variable2test=data.frame(X1=X3, X2 = X2), 
+test="permutations",parallel=TRUE, adaptive=TRUE)
 }
 \references{
 Gauthier M, Agniel D, Thiébaut R & Hejblum BP (2019).

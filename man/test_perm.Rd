@@ -4,16 +4,7 @@
 \alias{test_perm}
 \title{Permutation test}
 \usage{
-test_perm(
-  Y,
-  X,
-  Z = NULL,
-  n_perm = 100,
-  parallel = FALSE,
-  n_cpus = NULL,
-  space_y = FALSE,
-  number_y = length(Y)
-)
+test_perm(Y, X, Z = NULL, n_perm = 100, space_y = FALSE, number_y = length(Y))
 }
 \arguments{
 \item{Y}{a numeric vector of size \code{n} containing the
@@ -26,13 +17,6 @@ containing the variable(s) to be tested (the condition(s)). Multiple variables a
 of size \code{n} containing the covariate(s). Multiple variables are not allowed.}
 
 \item{n_perm}{the number of permutations. Default is \code{100}.}
-
-\item{parallel}{a logical flag indicating whether parallel computation
-should be enabled. Default is \code{TRUE}.}
-
-\item{n_cpus}{an integer indicating the number of cores to be used when
-\code{parallel} is \code{TRUE}.
-Default is \code{parallel::detectCores() - 1}.}
 
 \item{space_y}{a logical flag indicating whether the y thresholds are spaced. 
 When \code{space_y} is \code{TRUE}, a regular sequence between the minimum and 

@@ -48,7 +48,7 @@
 
 CDF <- function(Y,X,Z=NULL,method="linear regression", fast=TRUE){
 
-  if (class(Z)=="NULL"){
+  if (is.null(Z)){
     n_Y <- length(Y)
     temp_order <- sort(Y,index.return=TRUE)$ix
     y <- sort(unique(Y))

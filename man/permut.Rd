@@ -9,10 +9,8 @@ permut(
   X,
   Z = NULL,
   distance = "L2",
-  n_perm,
+  n_perm = 100,
   method = "logistic regression",
-  parallel = TRUE,
-  n_cpus = NULL,
   fast = TRUE
 )
 }
@@ -26,17 +24,12 @@ containing the variable(s) to be tested (the condition(s) to be tested).}
 \item{Z}{a data frame containing numeric or factor vector(s) of size \code{n}
 containing the covariate(s).}
 
+\item{n_perm}{the number of permutations. Default is \code{100}.}
+
 \item{method}{a character string indicating which method to use to
 compute the CCDF, either \code{'linear regression'}, \code{'logistic regression'}
 and  \code{'permutations'} or \code{'RF'} for Random Forests.
-Default is \code{'linear regression'} since it is the method used in the test.
-
-#'@param parallel a logical flag indicating whether parallel computation
-should be enabled. Default is \code{TRUE}.}
-
-\item{n_cpus}{an integer indicating the number of cores to be used when
-\code{parallel} is \code{TRUE}.
-Default is \code{parallel::detectCores() - 1}.}
+Default is \code{'linear regression'} since it is the method used in the test.}
 
 \item{fast}{a logical flag indicating whether the fast implementation of
 logistic regression should be used. Only if \code{'dist_permutations'} is specified.

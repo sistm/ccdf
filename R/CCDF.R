@@ -58,7 +58,7 @@ CCDF <- function(Y,X,Z=NULL,method=c("linear regression","logistic regression","
     y <- sort(unique(Y))
   }
   
-  if (class(Z)=="NULL"){
+  if (is.null(Z)){
     n_Y <- length(Y)
     # temp_order <- sort(Y,index.return=TRUE)$ix
     # y <- sort(unique(Y))
