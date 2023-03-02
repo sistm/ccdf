@@ -13,7 +13,7 @@ ccdf_testing(
   method = c("linear regression", "logistic regression", "RF"),
   fast = TRUE,
   n_perm = 100,
-  n_perm_adaptive = c(100, 150, 250, 500),
+  n_perm_adaptive = c(n_perm, n_perm, n_perm * 3, n_perm * 5),
   thresholds = c(0.1, 0.05, 0.01),
   parallel = TRUE,
   n_cpus = NULL,

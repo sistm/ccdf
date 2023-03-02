@@ -74,7 +74,7 @@ plot_CCDF <- function(Y,X,Z=NULL,method="linear regression",fast=TRUE,space_y=FA
   res <- CCDF(as.numeric(Y[,1]),X,Z,method,fast,space_y,number_y)
   
   
-  if (class(Z[,1])=="NULL"){
+  if (is.null(Z)){
     
     df_plot <- data.frame("y" = res$y, "x" = res$x, "cdf" = res$cdf, "ccdf" = res$ccdf)
     
