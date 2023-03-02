@@ -12,14 +12,14 @@ knitr::opts_chunk$set(
 )
 ```
 
-# `ccdf`
+# `citcdf`
 
-[![CRAN status](https://www.r-pkg.org/badges/version/ccdf)](https://CRAN.R-project.org/package=ccdf)
-[![R-CMD-check](https://github.com/sistm/ccdf/workflows/R-CMD-check/badge.svg)](https://github.com/sistm/ccdf/actions)
+[![CRAN status](https://www.r-pkg.org/badges/version/citcdf)](https://CRAN.R-project.org/package=citcdf)
+[![R-CMD-check](https://github.com/sistm/citcdf/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/sistm/citcdf/actions/workflows/R-CMD-check.yaml)
 
 ## Overview
 
-`ccdf` is a package for performing single-cell RNA-seq differential expression analysis and more generally **complex hypothesis testing**. 
+`citcdf` is a package for performing single-cell RNA-seq differential expression analysis and more generally **complex hypothesis testing**. 
 
 The main function of the package is `ccdf_testing()`. It  allows to use either an asymptotic test for large sample size or a permutation test for small sample size with the argument `method`.
 
@@ -32,22 +32,22 @@ The methods implemented in this package are detailed in the following article:
 ## Installation
 
 
-**`ccdf` is available from CRAN.**
+**`citcdf` is available from CRAN:**
 ```{r CRAN-install, eval=FALSE}
-install.packages("ccdf")
+install.packages("citcdf")
 ```
 
 
-**To install `ccdf`, you can download the development version on [GitHub](https://github.com/Mgauth/ccdf).**
+**To install `citcdf`, you can download the development version on [GitHub](https://github.com/sistm/citcdf).**
 ```{r GitHub-install, eval=FALSE}
 #install.packages("devtools")
-devtools::install_github("sistm/ccdf")
+devtools::install_github("sistm/citcdf")
 ```
 
 
 ## Example
 
-Here is a basic example which shows how to use `ccdf` with simple generated data.
+Here is a basic example which shows how to use `citcdf` with simple generated data.
 
 ```{r example, eval = FALSE}
 ## Data Generation

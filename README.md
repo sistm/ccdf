@@ -1,15 +1,15 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# `ccdf`
+# `citcdf`
 
 [![CRAN
-status](https://www.r-pkg.org/badges/version/ccdf)](https://CRAN.R-project.org/package=ccdf)
-[![R-CMD-check](https://github.com/sistm/ccdf/workflows/R-CMD-check/badge.svg)](https://github.com/sistm/ccdf/actions)
+status](https://www.r-pkg.org/badges/version/citcdf)](https://CRAN.R-project.org/package=citcdf)
+[![R-CMD-check](https://github.com/sistm/citcdf/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/sistm/citcdf/actions/workflows/R-CMD-check.yaml)
 
 ## Overview
 
-`ccdf` is a package for performing single-cell RNA-seq differential
+`citcdf` is a package for performing single-cell RNA-seq differential
 expression analysis and more generally **complex hypothesis testing**.
 
 The main function of the package is `ccdf_testing()`. It allows to use
@@ -26,23 +26,23 @@ article:
 
 ## Installation
 
-**`ccdf` is available from CRAN.**
+**`citcdf` is available from CRAN:**
 
 ``` r
-install.packages("ccdf")
+install.packages("citcdf")
 ```
 
-**To install `ccdf`, you can download the development version on
-[GitHub](https://github.com/Mgauth/ccdf).**
+**To install `citcdf`, you can download the development version on
+[GitHub](https://github.com/sistm/citcdf).**
 
 ``` r
 #install.packages("devtools")
-devtools::install_github("sistm/ccdf")
+devtools::install_github("sistm/citcdf")
 ```
 
 ## Example
 
-Here is a basic example which shows how to use `ccdf` with simple
+Here is a basic example which shows how to use `citcdf` with simple
 generated data.
 
 ``` r
