@@ -2,19 +2,30 @@ Package: citcdf
 Type: Package
 Title: Conditional Independence Testing with Cumulative Distribution Functions
 Version: 1.3.0
-Authors@R: c(person("Marine", "Gauthier", role = c("aut"),
-	                  email = "marine.gauthier@u-bordeaux.fr"),
-	           person("Denis", "Agniel", role = c("aut"),
+Authors@R: c(person("Denis", "Agniel", role = c("aut"),
                     email = "denis.agniel@gmail.com"),
+	           person("Kalidou", "Ba", role = c("ctb"),
+	                  email = "kalidou.ba@u-bordeaux.fr"),
+             person("Marine", "Gauthier", role = c("aut"),
+	                  email = "marine.gauthier@epoch-intelligence.fr"),
 	           person("Boris P.", "Hejblum", role = c("aut", "cre"),
-	                  email = "boris.hejblum@u-bordeaux.fr"))
-Imports: pbapply, parallel, matrixStats, RcppNumerical, ggplot2, randomForest, rpart, viridisLite, survey, cowplot
-Maintainer: Marine Gauthier <marine.gauthier@u-bordeaux.fr>
+	                  email = "boris.hejblum@u-bordeaux.fr"),
+	           person("Pierre", "Neuvial", role = c("ctb"),
+	                  email = "pierre.neuvial@math.univ-toulouse.fr"))
+Depends: R (>= 3.6)
+Imports: cowplot,
+         doParallel,
+         ggplot2,
+         matrixStats,
+         pbapply, 
+         parallel, 
+         RcppNumerical, 
+         survey,
+         viridisLite
 Description: Complex hypothesis testing through conditional cumulative distribution function estimation.
-             Method is detailed in: Gauthier M, Agniel D, Thiebaut R & Hejblum BP (2020). 
+             Method is detailed in: Gauthier M, Agniel D, Ba Kalidou, Thiebaut R & Hejblum BP (2020). 
              "Distribution-free complex hypothesis testing for single-cell RNA-seq differential expression analysis", BioRxiv <doi:10.1101/2021.05.21.445165>.
 License: GPL (>= 3)
 Encoding: UTF-8
 RoxygenNote: 7.2.3
-Depends: R (>= 3.6)
-BugReports: https://github.com/sistm/ccdf/issues
+BugReports: https://github.com/sistm/citcdf/issues

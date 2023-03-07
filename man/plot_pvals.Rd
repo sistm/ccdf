@@ -4,22 +4,22 @@
 \alias{plot_pvals}
 \title{Plot of gene-wise p-values}
 \usage{
-plot_pvals(pvals)
+plot_pvals(pvals, nominal_level = 0.05)
 }
 \arguments{
 \item{pvals}{a vector of length \code{n} containing the raw p-values for
 each gene}
+
+\item{nominal_level}{a nominal testing level between 0 and 1. 
+Default is 5\%: \code{0.05}.}
 }
 \value{
-a plot of sorted gene-wise p-values
-
-a \code{\link[ggplot2]{ggplot}} object
+a \code{ggplot2} of sorted gene-wise p-values
 }
 \description{
-This function prints the sorted exact p-values along with the Benjamini-Hochberg
-limit and the 5% threshold
+Plotting the sorted exact p-values along with the Benjamini-Hochberg
+limit and the nominal threshold
 }
 \examples{
-
 plot_pvals(runif(100,0,1))
 }

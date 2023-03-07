@@ -99,14 +99,7 @@ CCDF <- function(Y,X,Z=NULL,method=c("linear regression","logistic regression","
       
       else{
         
-        if (method=="RF"){
-          # CCDF
-          rf <- randomForest(data.frame(X=X, row.names = NULL), indi_Y,ntree=100)
-          ccdf[[i]] <- predict(rf)[w]
-        }
-        
-        
-        else if (method=="logistic regression"){
+        if (method=="logistic regression"){
           # CDF
           if(fast){
             #fast
@@ -184,18 +177,7 @@ CCDF <- function(Y,X,Z=NULL,method=c("linear regression","logistic regression","
         ccdf[[i]] <- rep(1,length(w))
       }
       
-      if (method=="RF"){
-        # CDF
-        rf_x <- randomForest(data.frame(X=X, Z=Z, row.names = NULL), indi_Y,ntree=50)
-        ccdf_x[[i]] <- predict(rf_x)[w]
-        # CCDF
-        rf_nox <- randomForest(data.frame(Z=Z, row.names = NULL), indi_Y,ntree=50)
-        ccdf_nox[[i]] <-  predict(rf_nox)[w]
-        
-      }
-      
-      
-      else if (method=="logistic regression"){
+      if (method=="logistic regression"){
         if (fast){
           glm_coef_x <- RcppNumerical::fastLR(x=modelmat, y=indi_Y)$coefficients
           glm_coef_nox <- RcppNumerical::fastLR(x= modelmat[,-ind_X], y=indi_Y)$coefficients

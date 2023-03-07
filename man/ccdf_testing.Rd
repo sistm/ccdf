@@ -9,7 +9,7 @@ ccdf_testing(
   variable2test = NULL,
   covariate = NULL,
   distance = c("L2", "L1", "L_sup"),
-  test = c("asymptotic", "permutations", "dist_permutations"),
+  test = c("asymptotic", "permutations"),
   method = c("linear regression", "logistic regression", "RF"),
   fast = TRUE,
   n_perm = 100,
@@ -39,9 +39,7 @@ compute the test, either \code{'L2'}, \code{'L1'} or
 Default is \code{'L2'}.}
 
 \item{test}{a character string indicating which method to use to
-compute the test, either \code{'asymptotic'}, \code{'permutations'} or 
-\code{'dist_permutations'}. \code{'dist_permutations'} allows to compute
-the distance between the CDF and the CCDF or two CCDFs.
+compute the test, either \code{'asymptotic'} or \code{'permutations'}.
 Default is \code{'asymptotic'}.}
 
 \item{method}{a character string indicating which method to use to
@@ -103,7 +101,7 @@ Main function to perform complex hypothesis testing using (un)conditional indepe
 \examples{
 
 ncells <- 100
-pgenes <- 5000
+pgenes <- 500
 X1 <- as.factor(rbinom(n=ncells, size = 1, prob = 0.5))
 Y <- t(replicate(pgenes, ((X1==1)*rnorm(n = ncells,0,1)) + ((X1==0)*rnorm(n = ncells, 0.5, 1))))
 X2 <- rnorm(n=ncells)
