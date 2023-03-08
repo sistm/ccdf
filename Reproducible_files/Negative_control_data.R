@@ -36,7 +36,7 @@ for (i in 1:10){
   
   # CCDF asymptotic test
   
-  res_ccdf_asymp <- ccdf_testing(data.frame(Y=Y), data.frame(X=as.factor(X)), test="asymptotic", n_cpus = 16)$pvals$raw_pval
+  res_ccdf_asymp <- cit(data.frame(Y=Y), data.frame(X=as.factor(X)), test="asymptotic", n_cpus = 16)$pvals$raw_pval
   
   res[i] <- length(which(p.adjust(res_ccdf_asymp,"BH")<0.05))
   

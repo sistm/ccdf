@@ -256,7 +256,7 @@ for (n in 1:length(size)){
   
   # CCDF asymptotic test
   
-  res_ccdf_asymp <- ccdf_testing(data.frame(Y=Y), data.frame(X=as.factor(X)), data.frame(Z=as.numeric(Z)), test="asymptotic", n_cpus = 16,
+  res_ccdf_asymp <- cit(data.frame(Y=Y), data.frame(X=as.factor(X)), data.frame(Z=as.numeric(Z)), test="asymptotic", n_cpus = 16,
                                  space_y = TRUE, number_y = (ncol(Y)/2))$pvals
   
   # p-values data frame

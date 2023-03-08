@@ -12,7 +12,7 @@ Y <- mat_mouse
 
 # CCDF asymptotic test
 
-res_ccdf_asymp <- ccdf_testing(Y, X, test="asymptotic", n_cpus = 16)$pvals$raw_pval
+res_ccdf_asymp <- cit(Y, X, test="asymptotic", n_cpus = 16)$pvals$raw_pval
 
 nb_DE_genes <- length(which(p.adjust(res_ccdf_asymp,"BH")<0.05))
 nb_inter_gold <-  length(intersect(genes_names[which(p.adjust(res_ccdf_asymp,"BH")<0.05)],top1000))

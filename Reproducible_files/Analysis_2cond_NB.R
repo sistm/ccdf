@@ -146,7 +146,7 @@ if( m < 7){
     colnames(Y) <- seq_len(ncells)
     names(X) <- colnames(Y)
     if(m==1){ # CCDF ASYMP
-      res_pvalue <- as.numeric(ccdf::ccdf_testing(data.frame(Y = Y), data.frame(X = as.factor(X)),
+      res_pvalue <- as.numeric(ccdf::cit(data.frame(Y = Y), data.frame(X = as.factor(X)),
                                                   test = "asymptotic", n_cpus = 16,
                                                   space_y = TRUE, number_y = (ncol(Y) / 2))$pvals$raw_pval)
     }else{
