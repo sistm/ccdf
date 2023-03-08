@@ -9,14 +9,14 @@ status](https://www.r-pkg.org/badges/version/ccdf)](https://CRAN.R-project.org/p
 
 ## Overview
 
-`ccdf` is a package for performing single-cell RNA-seq differential
-expression analysis and more generally **complex hypothesis testing**.
+`citcdf` is a package to perform conditional independence testing using
+empirical conditional cumulative distribution function estimations.
 
-The main function of the package is `ccdf_testing()`. It allows to use
-either an asymptotic test for large sample size or a permutation test
-for small sample size with the argument `method`.
+The main function of the package is `cit()`. It uses an asymptotic test
+(for large sample size , or a permutation test for small sample size
+with the argument `method`) to perform conditional independence testing.
 
-The methods implemented in this package are detailed in the following
+The approach implemented in this package is detailed in the following
 article:
 
 > Gauthier M, Agniel D, Thiébaut R & Hejblum BP (2020).
@@ -29,7 +29,7 @@ article:
 **`ccdf` is available from CRAN.**
 
 ``` r
-install.packages("ccdf")
+install.packages("citcdf")
 ```
 
 **To install `ccdf`, you can download the development version on
@@ -37,25 +37,26 @@ install.packages("ccdf")
 
 ``` r
 #install.packages("devtools")
-devtools::install_github("sistm/ccdf")
+devtools::install_github("sistm/citcdf")
 ```
 
 ## Example
 
-Here is a basic example which shows how to use `ccdf` with simple
+Here is a basic example which shows how to use `citcdf` with simple
 generated data.
 
 ``` r
 ## Data Generation
 X <- data.frame("X1" = as.factor(rbinom(n=100, size = 1, prob = 0.5)))
-Y <- data.frame("gene1" = t(replicate(10, ((X$X1==1)*rnorm(n = 50,0,1)) + ((X$X1==0)*rnorm(n = 50,0.5,1)))))
+Y <- data.frame("Y1" = t(replicate(10, ((X$X1==1)*rnorm(n = 50,0,1)) + ((X$X1==0)*rnorm(n = 50,0.5,1)))))
 ```
 
 ``` r
 # Hypothesis testing
-res_asymp <- ccdf_testing(exprmat=Y, variable2test=X, test="asymptotic") # asymptotic test
-res_perm <- ccdf_testing(exprmat=Y, variable2test=X, test="permutations",
+res_asymp <- cit(exprmat=Y, variable2test=X, test="asymptotic") # asymptotic test
+res_perm <- cit(exprmat=Y, variable2test=X, test="permutation",
                          adaptive=TRUE) # adaptive permutation test
 ```
 
-– Marine Gauthier, Denis Agniel, Rodolphe Thiébaut & Boris Hejblum
+– Marine Gauthier, Denis Agniel, Kalidou Ba, Rodolphe Thiébaut & Boris
+Hejblum

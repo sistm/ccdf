@@ -10,38 +10,27 @@
 #'@param covariate a data frame of numeric or factor vector(s) 
 #'of size \code{n} containing the covariate(s)
 #'
-#'@param test a character string indicating which method to use to
-#'compute the test, either \code{'asymptotic'} or \code{'permutations'}.
+#'@param test a character string indicating wether the \code{'asymptotic'} or 
+#'\code{'permutation'} test is computed.
 #'Default is \code{'asymptotic'}.
 #'
-#'@param method a character string indicating which method to use to
-#'compute the CCDF, either \code{'linear regression'}, \code{'logistic regression'}
-#' and  \code{'permutations'} or \code{'RF'} for Random Forests.
-#'Default is \code{'linear regression'} since it is the method used in the test.
-#'
-#'@param fast a logical flag indicating whether the fast implementation of
-#'logistic regression should be used. Only if \code{'dist_permutations'} is specified.
-#'Default is \code{TRUE}.
-#'
-#'@param n_perm the number of permutations. Default is \code{100}.
+#'@param n_perm the number of permutations. Default is \code{100}. Only used if
+#'\code{test == 'permutation'}.
 #'
 #'@param adaptive a logical flag indicating whether adaptive permutations
-#'should be performed. Default is \code{FALSE}.
+#'should be performed. Default is \code{FALSE}. Only used if
+#'\code{test == 'permutation'}.
 #'
 #'@param n_perm_adaptive a vector of the increasing numbers of 
 #'adaptive permutations when \code{adaptive} is \code{TRUE}. 
 #'\code{length(n_perm_adaptive)} should be equal to \code{length(thresholds)+1}. 
-#'Default is \code{c(100,150,250,500)}.
+#'Default is \code{c(100, 150, 250, 500)}.
 #'
 #'@param thresholds a vector of the decreasing thresholds to compute
 #'adaptive permutations when \code{adaptive} is \code{TRUE}. 
 #'\code{length(thresholds)} should be equal to \code{length(n_perm_adaptive)-1}.
-#'Default is \code{c(0.1,0.05,0.01)}.
+#'Default is \code{c(0.1, 0.05, 0.01)}.
 #'
-#'@param distance a character string indicating which distance to use to
-#'compute the test, either \code{'L2'}, \code{'L1'} or 
-#'\code{'L_sup'}, when \code{method} is \code{'dist_permutations'}, 
-#'Default is \code{'L2'}.
 #'
 #'@param parallel a logical flag indicating whether parallel computation
 #'should be enabled. Default is \code{TRUE}.
@@ -66,7 +55,7 @@
 #'@return A list with the following elements:\itemize{
 #'   \item \code{which_test}: a character string carrying forward the value of
 #'   the '\code{which_test}' argument indicating which test was performed (either
-#'   'asymptotic','permutations','dist_permutations').
+#'   'asymptotic' or 'permutation').
 #'   \item \code{n_perm}: an integer carrying forward the value of the
 #'   '\code{n_perm}' argument or '\code{n_perm_adaptive}' indicating the number of permutations performed
 #'   (\code{NA} if asymptotic test was performed).
@@ -93,37 +82,33 @@
 #'Z1 <- rnorm(ncells)
 #'Z2 <- as.factor(rbinom(n=ncells, size=1, prob = 0.5))
 #'
-#'res_asymp <- ccdf_testing(exprmat=data.frame(Y=Y), 
-#'variable2test=data.frame(X1=X3, X2 = X2), 
-#'covariate = data.frame(Z1 = Z1, Z2 = Z2),
-#'test="asymptotic", n_cpus=1, parallel=FALSE)
+#'res_asymp <- cit_multi(exprmat=data.frame(Y=Y), 
+#'                 variable2test=data.frame(X1=X3, X2 = X2), 
+#'                 covariate = data.frame(Z1 = Z1, Z2 = Z2),
+#'                 test="asymptotic", n_cpus=1, parallel=FALSE)
 #'hist(res_asymp$pvals$raw_pval) # asymptotic test
 
 
 
 
-ccdf_testing <- function(exprmat = NULL,
-                         variable2test = NULL,
-                         covariate = NULL,
-                         distance = c("L2","L1","L_sup"),
-                         test = c("asymptotic","permutations"),
-                         method = c("linear regression","logistic regression","RF"),
-                         fast = TRUE,
-                         n_perm = 100,
-                         n_perm_adaptive = c(n_perm, n_perm, n_perm*3, n_perm*5),
-                         thresholds = c(0.1,0.05,0.01),
-                         parallel = TRUE,
-                         n_cpus = NULL,
-                         adaptive = FALSE,
-                         space_y = TRUE,
-                         number_y = 10){
+cit_multi <- function(exprmat = NULL,
+                      variable2test = NULL,
+                      covariate = NULL,
+                      test = c("asymptotic","permutation"),
+                      n_perm = 100,
+                      n_perm_adaptive = c(n_perm, n_perm, n_perm*3, n_perm*5),
+                      thresholds = c(0.1,0.05,0.01),
+                      parallel = TRUE,
+                      n_cpus = NULL,
+                      adaptive = FALSE,
+                      space_y = TRUE,
+                      number_y = 10){
   
   # check
   stopifnot(is.data.frame(exprmat))
   stopifnot(is.data.frame(variable2test))
   stopifnot(is.data.frame(covariate) | is.null(covariate))
   stopifnot(is.logical(parallel))
-  stopifnot(is.logical(fast))
   stopifnot(is.logical(adaptive))
   stopifnot(is.numeric(n_perm))
   
@@ -148,23 +133,12 @@ ccdf_testing <- function(exprmat = NULL,
     exprmat <- exprmat[v_g>0, ]
   }
   
-  
-  if (length(method) > 1) {
-    method <- method[1]
-  }
-  stopifnot(method %in% c("linear regression","logistic regression"))
-  
   if (length(test) > 1) {
     test <- test[1]
   }
-  stopifnot(test %in% c("asymptotic","permutations"))
+  stopifnot(test %in% c("asymptotic","permutation"))
   
-  if (length(distance) > 1) {
-    distance <- distance[1]
-  }
-  stopifnot(distance %in% c("L2","L1","L_sup"))
-  
-  if (test == "permutations"){
+  if (test == "permutation"){
     
     if (adaptive){
       if ((length(n_perm_adaptive)!=(length(thresholds)+1))){
@@ -209,7 +183,7 @@ ccdf_testing <- function(exprmat = NULL,
   
   # Test ----
   ## permutations ----
-  if (test=="permutations"){
+  if (test=="permutation"){
     
     if (adaptive==TRUE){ 
       #### adaptive ----
@@ -217,7 +191,7 @@ ccdf_testing <- function(exprmat = NULL,
       
       res <- pbapply::pbsapply(1:nrow(exprmat), 
                                function(i){
-                                 test_perm(
+                                 cit_perm(
                                    Y = exprmat[i,],
                                    X = variable2test,
                                    Z = covariate,
@@ -239,7 +213,7 @@ ccdf_testing <- function(exprmat = NULL,
         
         res_perm <- pbapply::pbsapply(1:length(index), 
                                       function(i){
-                                        test_perm(Y = exprmat[index[i], ],
+                                        cit_perm(Y = exprmat[index[i], ],
                                                   X = variable2test,
                                                   Z = covariate,
                                                   n_perm = n_perm_adaptive[k],
@@ -264,7 +238,7 @@ ccdf_testing <- function(exprmat = NULL,
       message(paste("Computing", n_perm, "permutations..."))
       res <- do.call("rbind",pbapply::pblapply(1:nrow(exprmat), 
                                                function(i){
-                                                 test_perm(Y = exprmat[i,],
+                                                 cit_perm(Y = exprmat[i,],
                                                            X = variable2test,
                                                            Z = covariate,
                                                            n_perm = n_perm,
@@ -290,13 +264,13 @@ ccdf_testing <- function(exprmat = NULL,
     Y <- exprmat
     X <- variable2test
     Z <- covariate
-    res <- do.call("rbind",pbapply::pblapply(1:nrow(Y), 
-                                             function(i){
-                                               test_asymp(Y[i,], X, Z, 
-                                                          space_y = space_y, 
-                                                          number_y = number_y)
-                                             }, 
-                                             cl=cl)
+    res <- do.call("rbind", pbapply::pblapply(1:nrow(Y), 
+                                              function(i){
+                                                cit_asymp(Y[i,], X, Z, 
+                                                           space_y = space_y, 
+                                                           number_y = number_y)
+                                              }, 
+                                              cl=cl)
     )
     df <- data.frame(raw_pval = res$raw_pval, adj_pval = p.adjust(res$raw_pval, method = "BH"), test_statistic = res$Stat)
   }
@@ -307,10 +281,11 @@ ccdf_testing <- function(exprmat = NULL,
   
   #rownames(df) <- genes_names
   
-  
-  return(list(which_test = test,
-              n_perm = n_perm, 
-              pvals = df))
+  output <- list(which_test = test,
+                 n_perm = n_perm, 
+                 pvals = df)
+  class(output) <- "cit_multi"
+  return(output)
   
   
 }

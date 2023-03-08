@@ -30,10 +30,10 @@
 #' 
 #'X <- as.factor(rbinom(n=100, size = 1, prob = 0.5))
 #'Y <- ((X==1)*rnorm(n = 50,0,1)) + ((X==0)*rnorm(n = 50,0.5,1))
-#'res_asymp <- test_asymp(Y,data.frame(X=X))
+#'res_asymp <- cit_asymp(Y,data.frame(X=X))
 
 
-test_asymp <- function(Y, X, Z = NULL, space_y = FALSE, number_y = length(unique(Y))){
+cit_asymp <- function(Y, X, Z = NULL, space_y = FALSE, number_y = length(unique(Y))){
   
   # computations independent of Y: should be computed only once before the pbapply loop ----
   
