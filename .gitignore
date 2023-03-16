@@ -4,4 +4,4 @@
 *.DS_Store
 .Ruserdata
 ^CRAN-RELEASE$
-*.DS_Store
+*.Rproj
