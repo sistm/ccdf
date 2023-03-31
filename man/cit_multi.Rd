@@ -2,36 +2,40 @@
 % Please edit documentation in R/cit_multi.R
 \name{cit_multi}
 \alias{cit_multi}
-\title{Main function to perform complex hypothesis testing using (un)conditional independence test}
+\title{Multiple conditional independence testing}
 \usage{
 cit_multi(
-  exprmat = NULL,
-  variable2test = NULL,
-  covariate = NULL,
+  M,
+  X,
+  Z = NULL,
   test = c("asymptotic", "permutation"),
   n_perm = 100,
   n_perm_adaptive = c(n_perm, n_perm, n_perm * 3, n_perm * 5),
   thresholds = c(0.1, 0.05, 0.01),
-  parallel = TRUE,
-  n_cpus = NULL,
+  parallel = interactive(),
+  n_cpus = detectCores() - 1,
   adaptive = FALSE,
   space_y = TRUE,
   number_y = 10
 )
 }
 \arguments{
-\item{exprmat}{a data frame of size \code{G x n} containing the
-preprocessed expressions from \code{n} samples (or cells) for \code{G}
-genes. Default is \code{NULL}.}
+\item{M}{a \code{data.frame} or a \code{matrix} of size \code{n x r} 
+containing the different Y variables to test for conditional independence 
+with \code{X} adjusted on \code{Z}}
 
-\item{variable2test}{a data frame of numeric or factor vector(s) 
-of size \code{n} containing the variable(s) to be tested (the condition(s))}
+\item{X}{a data frame of size \code{n x p} of numeric or factor vector(s) 
+containing the variable(s) to be tested for conditional independence 
+against \code{X} adjusted on \code{Z}. Multiple variables (\code{p>1}) 
+are only supported by the asymptotic test.}
 
-\item{covariate}{a data frame of numeric or factor vector(s) 
-of size \code{n} containing the covariate(s)}
+\item{Z}{a data frame of size \code{n x q} of numeric or factor vector(s) 
+containing the covariate(s) to condition the independence 
+test upon. Multiple covariates (\code{q>1}) are only supported by the 
+asymptotic test.}
 
-\item{test}{a character string indicating wether the \code{'asymptotic'} or 
-\code{'permutation'} test is computed.
+\item{test}{a character string indicating whether the \code{'asymptotic'} or 
+the \code{'permutation'} test is computed.
 Default is \code{'asymptotic'}.}
 
 \item{n_perm}{the number of permutations. Default is \code{100}. Only used if
@@ -48,17 +52,19 @@ adaptive permutations when \code{adaptive} is \code{TRUE}.
 Default is \code{c(0.1, 0.05, 0.01)}.}
 
 \item{parallel}{a logical flag indicating whether parallel computation
-should be enabled. Default is \code{TRUE}.}
+should be enabled. Default is \code{TRUE} if \code{interactive()} is 
+\code{TRUE}, else is \code{FALSE}.}
 
-\item{n_cpus}{an integer indicating the number of cores to be used for the computations.
-Default is \code{parallel::detectCores() - 1}. If \code{n_cpus = 1}, then sequential 
-computations are used without any parallelization.}
+\item{n_cpus}{an integer indicating the number of cores to be used for the 
+computations. Default is \code{parallel::detectCores() - 1}. If 
+\code{n_cpus = 1}, then sequential computations are used without any 
+parallelization.}
 
 \item{adaptive}{a logical flag indicating whether adaptive permutations
 should be performed. Default is \code{FALSE}. Only used if
 \code{test == 'permutation'}.}
 
-\item{space_y}{a logical flag indicating whether the y thresholds are spaced. 
+\item{space_y}{a logical flag indicating whether the y thresholds are spaced out. 
 When \code{space_y} is \code{TRUE}, a regular sequence between the minimum and 
 the maximum of the observations is used. If \code{FALSE}, each unique 
 observed expression value is used as a distinct threshold. Default is \code{TRUE}.}
@@ -81,24 +87,46 @@ A list with the following elements:\itemize{
 }
 }
 \description{
-Main function to perform complex hypothesis testing using (un)conditional independence test
+Multiple conditional independence testing
 }
 \examples{
 
-ncells <- 100
-pgenes <- 500
-X1 <- as.factor(rbinom(n=ncells, size = 1, prob = 0.5))
-Y <- t(replicate(pgenes, ((X1==1)*rnorm(n = ncells,0,1)) + ((X1==0)*rnorm(n = ncells, 0.5, 1))))
-X2 <- rnorm(n=ncells)
-X3 <- rnorm(n=ncells)
-Z1 <- rnorm(ncells)
-Z2 <- as.factor(rbinom(n=ncells, size=1, prob = 0.5))
+set.seed(123)
+n <- 100
+r <- 200
+Z1 <- rnorm(n)
+Z2 <- rnorm(n)#rbinom(n, size=1, prob=0.5) + rnorm(n, sd=0.05)
+X1 <- Z2 + rnorm(n, sd=0.2)
+X2 <- rnorm(n)
+cor(X1, Z2)
+Y <- replicate(r, Z2) + rnorm(n*r, 0, 0.5)
+range(cor(Y, Z2))
+range(cor(Y, X2))
+res_asymp_unadj <- cit_multi(M = data.frame(Y=Y), 
+                X = data.frame(X1=X1, X2=X2),
+                test="asymptotic", parallel=FALSE)
+mean(res_asymp_unadj$pvals$raw_pval<0.05)
 
-res_asymp <- cit_multi(exprmat=data.frame(Y=Y), 
-                variable2test=data.frame(X1=X3, X2 = X2), 
-                covariate = data.frame(Z1 = Z1, Z2 = Z2),
-                test="asymptotic", n_cpus=1, parallel=FALSE)
-hist(res_asymp$pvals$raw_pval) # asymptotic test
+res_asymp_adj <- cit_multi(M = data.frame(Y=Y), 
+                X = data.frame(X1=X1, X2=X2), 
+                Z = data.frame(Z1=Z1, Z2=Z2),
+                test="asymptotic", parallel=FALSE)
+mean(res_asymp_adj$pvals$raw_pval<0.05)
+
+if(interactive()){
+res_perm_unadj <- cit_multi(M = data.frame(Y=Y), 
+                X = data.frame(X1=X1),
+                test="permutation", parallel=TRUE)
+mean(res_perm_unadj$pvals$raw_pval<0.05)
+
+res_perm_adj <- cit_multi(M = data.frame(Y=Y), 
+                X = data.frame(X1=X1), 
+                Z = data.frame(Z2=Z2),
+                test="permutation", 
+                parallel=TRUE, 
+                n_perm=100)
+mean(res_perm_adj$pvals$raw_pval<0.05)
+}
 }
 \references{
 Gauthier M, Agniel D, Thiébaut R & Hejblum BP (2019).

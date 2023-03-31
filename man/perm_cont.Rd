@@ -7,13 +7,13 @@
 perm_cont(Y, X, Z)
 }
 \arguments{
-\item{Y}{a numeric vector of size \code{n} containing the
+\item{Y}{a numeric vector of length \code{n} containing the
 preprocessed expressions from \code{n} samples (or cells).}
 
-\item{X}{a numeric or factor vector of size \code{n}
+\item{X}{a numeric or factor vector of length \code{n}
 containing the variable to be tested (the condition to be tested).}
 
-\item{Z}{a numeric vector of size \code{n}
+\item{Z}{a numeric vector of length \code{n}
 containing the covariate. Multiple variables are not allowed.}
 }
 \value{

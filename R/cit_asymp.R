@@ -1,13 +1,17 @@
-#' Asymptotic test
-#'
-#'@param Y a numeric vector of size \code{n} containing the
-#'preprocessed expression for a given gene from \code{n} samples (or cells).
-#'
-#'@param X a data frame of numeric or factor vector(s) of size \code{n}
-#'containing the variable(s) to be tested (the condition(s))
+#' Asymptotic test for conditional independance
 #' 
-#'@param Z a data frame of numeric or factor vector(s) 
-#'of size \code{n} containing the covariate(s)
+#' Test the conditional independence of Y and X given Z.
+#'
+#'@param Y a numeric vector of length \code{n} to test for conditional independence 
+#'with \code{X} adjusted on \code{Z}
+#'
+#'@param X a data frame of size \code{n x p} of numeric or factor vector(s) 
+#'containing the variable(s) to be tested for conditional independence 
+#'against \code{X} adjusted on \code{Z}.
+#' 
+#'@param Z a data frame of size \code{n x q} of numeric or factor vector(s) 
+#'containing the covariate(s) to condition the independence 
+#'test upon.
 #'
 #'@param space_y a logical flag indicating whether the y thresholds are spaced. 
 #'When \code{space_y} is \code{TRUE}, a regular sequence between the minimum and 

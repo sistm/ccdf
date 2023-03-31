@@ -2,23 +2,26 @@
 % Please edit documentation in R/cit_perm.R
 \name{cit_perm}
 \alias{cit_perm}
-\title{Permutation test}
+\title{Permutation test for conditional independence}
 \usage{
 cit_perm(Y, X, Z = NULL, n_perm = 100, space_y = FALSE, number_y = length(Y))
 }
 \arguments{
-\item{Y}{a numeric vector of size \code{n} containing the
-preprocessed expression for a given gene from \code{n} samples (or cells).}
+\item{Y}{a numeric vector of length \code{n} to test for conditional independence 
+with \code{X} adjusted on \code{Z}}
 
-\item{X}{a data frame of numeric or factor vector(s) of size \code{n}
-containing the variable(s) to be tested (the condition(s)). Multiple variables are not allowed.}
+\item{X}{a data frame of size \code{n x p} of numeric or factor vector(s) 
+containing the variable(s) to be tested for conditional independence 
+against \code{X} adjusted on \code{Z}. Multiple variables are not supported 
+for permutation.}
 
-\item{Z}{a data frame of numeric or factor vector(s) 
-of size \code{n} containing the covariate(s). Multiple variables are not allowed.}
+\item{Z}{a data.frame of size \code{n x 1} of numeric or factor vector 
+containing the covariate to condition the independence 
+test upon. Multiple covariates are not supported for permutation.}
 
 \item{n_perm}{the number of permutations. Default is \code{100}.}
 
-\item{space_y}{a logical flag indicating whether the y thresholds are spaced. 
+\item{space_y}{a logical flag indicating whether the y thresholds are spaced out. 
 When \code{space_y} is \code{TRUE}, a regular sequence between the minimum and 
 the maximum of the observations is used. Default is \code{FALSE}.}
 
@@ -33,7 +36,7 @@ A data frame with the following elements:
 }
 }
 \description{
-Permutation test
+Permutation test for conditional independence
 }
 \examples{
 

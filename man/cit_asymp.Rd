@@ -2,19 +2,21 @@
 % Please edit documentation in R/cit_asymp.R
 \name{cit_asymp}
 \alias{cit_asymp}
-\title{Asymptotic test}
+\title{Asymptotic test for conditional independance}
 \usage{
 cit_asymp(Y, X, Z = NULL, space_y = FALSE, number_y = length(unique(Y)))
 }
 \arguments{
-\item{Y}{a numeric vector of size \code{n} containing the
-preprocessed expression for a given gene from \code{n} samples (or cells).}
+\item{Y}{a numeric vector of length \code{n} to test for conditional independence 
+with \code{X} adjusted on \code{Z}}
 
-\item{X}{a data frame of numeric or factor vector(s) of size \code{n}
-containing the variable(s) to be tested (the condition(s))}
+\item{X}{a data frame of size \code{n x p} of numeric or factor vector(s) 
+containing the variable(s) to be tested for conditional independence 
+against \code{X} adjusted on \code{Z}.}
 
-\item{Z}{a data frame of numeric or factor vector(s) 
-of size \code{n} containing the covariate(s)}
+\item{Z}{a data frame of size \code{n x q} of numeric or factor vector(s) 
+containing the covariate(s) to condition the independence 
+test upon.}
 
 \item{space_y}{a logical flag indicating whether the y thresholds are spaced. 
 When \code{space_y} is \code{TRUE}, a regular sequence between the minimum and 
@@ -31,7 +33,7 @@ A data frame with the following elements:
 }
 }
 \description{
-Asymptotic test
+Test the conditional independence of Y and X given Z.
 }
 \examples{
 

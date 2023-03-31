@@ -12,7 +12,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-# `ccdf`
+# `citcdf`
 
 [![CRAN status](https://www.r-pkg.org/badges/version/ccdf)](https://CRAN.R-project.org/package=ccdf)
 [![R-CMD-check](https://github.com/sistm/ccdf/workflows/R-CMD-check/badge.svg)](https://github.com/sistm/ccdf/actions)

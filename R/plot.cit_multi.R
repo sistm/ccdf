@@ -18,14 +18,15 @@
 #'@export
 #'
 #'@examples
-#'ncells <- 100
-#'pgenes <- 500
-#'X1 <- as.factor(rbinom(n=ncells, size = 1, prob = 0.5))
-#'Y <- t(replicate(pgenes, ((X1==1)*rnorm(n = ncells,0,1)) + ((X1==0)*rnorm(n = ncells, 0.5, 1))))
+#'n <- 100
+#'p <- 500
+#'X1 <- as.factor(rbinom(n=n, size = 1, prob = 0.5))
+#'Y <- replicate(p, ((X1==1)*rnorm(n = n,0,1)) + ((X1==0)*rnorm(n = n, 0.5, 1)))
 #'
-#'res_asymp <- cit_multi(exprmat=data.frame(Y=Y),
-#'                       variable2test=data.frame(X1), 
-#'                       test="asymptotic", n_cpus=1, parallel=FALSE)
+#'res_asymp <- cit_multi(M=data.frame(Y=Y),
+#'                       X=data.frame(X = X1), 
+#'                       test="asymptotic",
+#'                       parallel=FALSE)
 #'plot(res_asymp)
 #'
 plot.cit_multi <- function(x, ..., nominal_level = 0.05){

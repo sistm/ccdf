@@ -1,17 +1,21 @@
-#' Main function to perform complex hypothesis testing using (un)conditional independence test
+#' Multiple conditional independence testing
 #'
-#'@param exprmat a data frame of size \code{G x n} containing the
-#'preprocessed expressions from \code{n} samples (or cells) for \code{G}
-#'genes. Default is \code{NULL}.
+#'@param M a \code{data.frame} or a \code{matrix} of size \code{n x r} 
+#'containing the different Y variables to test for conditional independence 
+#'with \code{X} adjusted on \code{Z}
 #'
-#'@param variable2test a data frame of numeric or factor vector(s) 
-#'of size \code{n} containing the variable(s) to be tested (the condition(s))
+#'@param X a data frame of size \code{n x p} of numeric or factor vector(s) 
+#'containing the variable(s) to be tested for conditional independence 
+#'against \code{X} adjusted on \code{Z}. Multiple variables (\code{p>1}) 
+#'are only supported by the asymptotic test.
 #' 
-#'@param covariate a data frame of numeric or factor vector(s) 
-#'of size \code{n} containing the covariate(s)
+#'@param Z a data frame of size \code{n x q} of numeric or factor vector(s) 
+#'containing the covariate(s) to condition the independence 
+#'test upon. Multiple covariates (\code{q>1}) are only supported by the 
+#'asymptotic test.
 #'
-#'@param test a character string indicating wether the \code{'asymptotic'} or 
-#'\code{'permutation'} test is computed.
+#'@param test a character string indicating whether the \code{'asymptotic'} or 
+#'the \code{'permutation'} test is computed.
 #'Default is \code{'asymptotic'}.
 #'
 #'@param n_perm the number of permutations. Default is \code{100}. Only used if
@@ -33,13 +37,15 @@
 #'
 #'
 #'@param parallel a logical flag indicating whether parallel computation
-#'should be enabled. Default is \code{TRUE}.
+#'should be enabled. Default is \code{TRUE} if \code{interactive()} is 
+#'\code{TRUE}, else is \code{FALSE}.
 #'
-#'@param n_cpus an integer indicating the number of cores to be used for the computations.
-#'Default is \code{parallel::detectCores() - 1}. If \code{n_cpus = 1}, then sequential 
-#'computations are used without any parallelization.
+#'@param n_cpus an integer indicating the number of cores to be used for the 
+#'computations. Default is \code{parallel::detectCores() - 1}. If 
+#'\code{n_cpus = 1}, then sequential computations are used without any 
+#'parallelization.
 #'
-#'@param space_y a logical flag indicating whether the y thresholds are spaced. 
+#'@param space_y a logical flag indicating whether the y thresholds are spaced out. 
 #'When \code{space_y} is \code{TRUE}, a regular sequence between the minimum and 
 #'the maximum of the observations is used. If \code{FALSE}, each unique 
 #'observed expression value is used as a distinct threshold. Default is \code{TRUE}.
@@ -48,8 +54,8 @@
 #'the number of regressions) to perform the test. Default is 10.
 #'
 #'
-#'@import pbapply parallel
-#'@importFrom doParallel registerDoParallel
+#'@import pbapply
+#'@importFrom parallel makeCluster stopCluster detectCores
 #'
 #'
 #'@return A list with the following elements:\itemize{
@@ -72,66 +78,85 @@
 #'@export
 #'
 #'@examples
-#' 
-#'ncells <- 100
-#'pgenes <- 500
-#'X1 <- as.factor(rbinom(n=ncells, size = 1, prob = 0.5))
-#'Y <- t(replicate(pgenes, ((X1==1)*rnorm(n = ncells,0,1)) + ((X1==0)*rnorm(n = ncells, 0.5, 1))))
-#'X2 <- rnorm(n=ncells)
-#'X3 <- rnorm(n=ncells)
-#'Z1 <- rnorm(ncells)
-#'Z2 <- as.factor(rbinom(n=ncells, size=1, prob = 0.5))
 #'
-#'res_asymp <- cit_multi(exprmat=data.frame(Y=Y), 
-#'                 variable2test=data.frame(X1=X3, X2 = X2), 
-#'                 covariate = data.frame(Z1 = Z1, Z2 = Z2),
-#'                 test="asymptotic", n_cpus=1, parallel=FALSE)
-#'hist(res_asymp$pvals$raw_pval) # asymptotic test
+#'set.seed(123)
+#'n <- 100
+#'r <- 200
+#'Z1 <- rnorm(n)
+#'Z2 <- rnorm(n)#rbinom(n, size=1, prob=0.5) + rnorm(n, sd=0.05)
+#'X1 <- Z2 + rnorm(n, sd=0.2)
+#'X2 <- rnorm(n)
+#'cor(X1, Z2)
+#'Y <- replicate(r, Z2) + rnorm(n*r, 0, 0.5)
+#'range(cor(Y, Z2))
+#'range(cor(Y, X2))
+#'res_asymp_unadj <- cit_multi(M = data.frame(Y=Y), 
+#'                 X = data.frame(X1=X1, X2=X2),
+#'                 test="asymptotic", parallel=FALSE)
+#'mean(res_asymp_unadj$pvals$raw_pval<0.05)
+#'
+#'res_asymp_adj <- cit_multi(M = data.frame(Y=Y), 
+#'                 X = data.frame(X1=X1, X2=X2), 
+#'                 Z = data.frame(Z1=Z1, Z2=Z2),
+#'                 test="asymptotic", parallel=FALSE)
+#'mean(res_asymp_adj$pvals$raw_pval<0.05)
+#'
+#'if(interactive()){
+#'res_perm_unadj <- cit_multi(M = data.frame(Y=Y), 
+#'                 X = data.frame(X1=X1),
+#'                 test="permutation", parallel=TRUE)
+#'mean(res_perm_unadj$pvals$raw_pval<0.05)
+#'
+#'res_perm_adj <- cit_multi(M = data.frame(Y=Y), 
+#'                 X = data.frame(X1=X1), 
+#'                 Z = data.frame(Z2=Z2),
+#'                 test="permutation", 
+#'                 parallel=TRUE, 
+#'                 n_perm=100)
+#'mean(res_perm_adj$pvals$raw_pval<0.05)
+#'}
 
 
 
-
-cit_multi <- function(exprmat = NULL,
-                      variable2test = NULL,
-                      covariate = NULL,
+cit_multi <- function(M,
+                      X,
+                      Z = NULL,
                       test = c("asymptotic","permutation"),
                       n_perm = 100,
                       n_perm_adaptive = c(n_perm, n_perm, n_perm*3, n_perm*5),
                       thresholds = c(0.1,0.05,0.01),
-                      parallel = TRUE,
-                      n_cpus = NULL,
+                      parallel = interactive(),
+                      n_cpus = detectCores() - 1,
                       adaptive = FALSE,
                       space_y = TRUE,
                       number_y = 10){
   
   # check
-  stopifnot(is.data.frame(exprmat))
-  stopifnot(is.data.frame(variable2test))
-  stopifnot(is.data.frame(covariate) | is.null(covariate))
+  if(is.matrix(M)){
+    M <- as.data.frame(M)
+  }
+  
+  stopifnot(is.data.frame(M))
+  stopifnot(is.data.frame(X))
+  stopifnot(is.data.frame(Z) | is.null(Z))
   stopifnot(is.logical(parallel))
   stopifnot(is.logical(adaptive))
   stopifnot(is.numeric(n_perm))
   
-  genes_names <- rownames(exprmat)
+  M_colnames <- colnames(M)
   
-  if (sum(is.na(exprmat)) > 1) {
-    warning("'y' contains", sum(is.na(exprmat)), "NA values. ",
+  if (sum(is.na(M)) > 1) {
+    warning("'M' contains", sum(is.na(M)), "NA values. ",
             "\nCurrently they are ignored in the computations but ",
             "you should think carefully about where do those NA/NaN ",
             "come from...")
-    exprmat <- exprmat[complete.cases(exprmat),]
+    M <- M[,complete.cases(t(M))]
   }
   
-  
-  # checking for 0 variance genes
-  v_g <- matrixStats::rowVars(as.matrix(exprmat))
-  if(sum(v_g==0) > 0){
-    warning("Removing ", sum(v_g==0), " genes with 0 variance from ",
-            "the testing procedure.\n",
-            "  Those genes should probably have been removed ",
-            "beforehand...")
-    exprmat <- exprmat[v_g>0, ]
-  }
+  r <- ncol(M)
+  n <- nrow(M)
+  stopifnot(nrow(X) == n)
+  stopifnot(nrow(Z) == n | is.null(Z))
   
   if (length(test) > 1) {
     test <- test[1]
@@ -145,10 +170,8 @@ cit_multi <- function(exprmat = NULL,
         warning("length of thresholds + 1 must be equal to length of n_perm_adaptive. \n",
                 "Consider using the default parameters.")
       }
-    }
-    
-    else{
-      N_possible_perms <- factorial(ncol(exprmat))
+    }else{
+      N_possible_perms <- factorial(n)
       if (n_perm > N_possible_perms){
         warning("The number of permutations requested 'n_perm' is ",
                 n_perm, "which is larger than the total number of ",
@@ -170,37 +193,43 @@ cit_multi <- function(exprmat = NULL,
   # parallel
   
   if(parallel){
-    if(is.null(n_cpus)){
-      n_cpus <- parallel::detectCores() - 1
+    
+    if(.Platform$OS.type == "unix"){
+      par_clust <- n_cpus
+    }else{
+      par_clust <- parallel::makeCluster(n_cpus)
     }
-    cl <- parallel::makeCluster(n_cpus)
-    doParallel::registerDoParallel(cl)
+    
+  }else{
+    par_clust <- 1L
   }
-  else{
-    n_cpus <- 1
-    cl<-1
-  }
+  
+  
+  
   
   # Test ----
   ## permutations ----
   if (test=="permutation"){
+      
+    stopifnot(ncol(X) < 2)
+    stopifnot(ncol(Z) < 2 | is.null(Z))
     
     if (adaptive==TRUE){ 
       #### adaptive ----
       message(paste("Computing", n_perm_adaptive[1], "permutations..."))
       
-      res <- pbapply::pbsapply(1:nrow(exprmat), 
-                               function(i){
+      res <- pbapply::pbsapply(1:r, 
+                               function(j){
                                  cit_perm(
-                                   Y = exprmat[i,],
-                                   X = variable2test,
-                                   Z = covariate,
+                                   Y = M[, j],
+                                   X = X,
+                                   Z = Z,
                                    n_perm = n_perm_adaptive[1],
                                    space_y = space_y, 
                                    number_y = number_y)$score
                                },
-                               cl=cl)
-      perm <- rep(n_perm_adaptive[1],nrow(exprmat))
+                               cl=par_clust)
+      perm <- rep(n_perm_adaptive[1], r)
       
       k <- 2
       index <- which((res+1)/(perm+1) <= thresholds[k-1])
@@ -211,16 +240,30 @@ cit_multi <- function(exprmat = NULL,
         
         message(paste("Computing", sum(n_perm_adaptive[k]), "additional permutations..."))
         
-        res_perm <- pbapply::pbsapply(1:length(index), 
-                                      function(i){
-                                        cit_perm(Y = exprmat[index[i], ],
-                                                  X = variable2test,
-                                                  Z = covariate,
-                                                  n_perm = n_perm_adaptive[k],
-                                                  space_y = space_y, 
-                                                  number_y = number_y)$score
-                                      }, 
-                                      cl = cl)
+        if(parallel & .Platform$OS.type == "unix"){
+            res_perm <- pbapply::pbsapply(1:length(index), 
+                                          function(i){
+                                              cit_perm(Y = M[, index[i]],
+                                                       X = X,
+                                                       Z = Z,
+                                                       n_perm = n_perm_adaptive[k],
+                                                       space_y = space_y, 
+                                                       number_y = number_y)$score
+                                          }, 
+                                          cl = par_clust, mc.preschedule=TRUE)
+        }else{
+            res_perm <- pbapply::pbsapply(1:length(index), 
+                                          function(i){
+                                              cit_perm(Y = M[, index[i]],
+                                                       X = X,
+                                                       Z = Z,
+                                                       n_perm = n_perm_adaptive[k],
+                                                       space_y = space_y, 
+                                                       number_y = number_y)$score
+                                          }, 
+                                          cl = par_clust)
+        }
+        
         res[index] <- res[index] + res_perm
         perm[index] <- perm[index] + rep(n_perm_adaptive[k], length(index))
         k <- k+1
@@ -236,16 +279,30 @@ cit_multi <- function(exprmat = NULL,
     }else{ 
       #### non-adaptive ----
       message(paste("Computing", n_perm, "permutations..."))
-      res <- do.call("rbind",pbapply::pblapply(1:nrow(exprmat), 
-                                               function(i){
-                                                 cit_perm(Y = exprmat[i,],
-                                                           X = variable2test,
-                                                           Z = covariate,
-                                                           n_perm = n_perm,
-                                                           space_y = space_y, 
-                                                           number_y = number_y)
-                                               },
-                                               cl=cl))
+      
+        if(parallel & .Platform$OS.type == "unix"){
+            res <- do.call("rbind", pbapply::pblapply(1:r, 
+                                                      function(j){
+                                                          cit_perm(Y = M[, j],
+                                                                   X = X,
+                                                                   Z = Z,
+                                                                   n_perm = n_perm,
+                                                                   space_y = space_y, 
+                                                                   number_y = number_y)
+                                                      },
+                                                      cl=par_clust, mc.preschedule=TRUE))
+        }else{
+            res <- do.call("rbind", pbapply::pblapply(1:r, 
+                                                      function(j){
+                                                          cit_perm(Y = M[, j],
+                                                                   X = X,
+                                                                   Z = Z,
+                                                                   n_perm = n_perm,
+                                                                   space_y = space_y, 
+                                                                   number_y = number_y)
+                                                      },
+                                                      cl=par_clust))
+        }
       
       #res <- as.vector(unlist(res))
       
@@ -255,31 +312,27 @@ cit_multi <- function(exprmat = NULL,
     }
     
     
-  }
-  
-  ## asymptotic ----
-  else if (test=="asymptotic"){
+  } else if (test=="asymptotic"){
+    ## asymptotic ----
     n_perm <- NA
-    
-    Y <- exprmat
-    X <- variable2test
-    Z <- covariate
-    res <- do.call("rbind", pbapply::pblapply(1:nrow(Y), 
-                                              function(i){
-                                                cit_asymp(Y[i,], X, Z, 
-                                                           space_y = space_y, 
-                                                           number_y = number_y)
+    res <- do.call("rbind", pbapply::pblapply(1:r, 
+                                              function(j){
+                                                cit_asymp(M[, j], X, Z, 
+                                                          space_y = space_y, 
+                                                          number_y = number_y)
                                               }, 
-                                              cl=cl)
+                                              cl=par_clust)
     )
-    df <- data.frame(raw_pval = res$raw_pval, adj_pval = p.adjust(res$raw_pval, method = "BH"), test_statistic = res$Stat)
+    df <- data.frame(raw_pval = res$raw_pval, 
+                     adj_pval = p.adjust(res$raw_pval, method = "BH"), 
+                     test_statistic = res$Stat)
   }
   
-  if(parallel){
-    parallel::stopCluster(cl)
+  if(parallel && .Platform$OS.type != "unix"){
+    parallel::stopCluster(par_clust)
   }
   
-  #rownames(df) <- genes_names
+  #rownames(df) <- M_colnames
   
   output <- list(which_test = test,
                  n_perm = n_perm, 
