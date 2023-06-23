@@ -22,7 +22,7 @@
 #'\code{test == 'permutation'}.
 #'
 #'@param adaptive a logical flag indicating whether adaptive permutations
-#'should be performed. Default is \code{FALSE}. Only used if
+#'should be performed. Default is \code{TRUE}. Only used if
 #'\code{test == 'permutation'}.
 #'
 #'@param n_perm_adaptive a vector of the increasing numbers of 
@@ -127,7 +127,7 @@ cit_multi <- function(M,
                       thresholds = c(0.1,0.05,0.01),
                       parallel = interactive(),
                       n_cpus = detectCores() - 1,
-                      adaptive = FALSE,
+                      adaptive = TRUE,
                       space_y = TRUE,
                       number_y = 10){
   

@@ -1,5 +1,2 @@
-# ccdf 1.2
- * faster computations
-
-# ccdf 1.1.4
+# citcdf 1.0.0
  * first CRAN release

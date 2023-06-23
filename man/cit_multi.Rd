@@ -14,7 +14,7 @@ cit_multi(
   thresholds = c(0.1, 0.05, 0.01),
   parallel = interactive(),
   n_cpus = detectCores() - 1,
-  adaptive = FALSE,
+  adaptive = TRUE,
   space_y = TRUE,
   number_y = 10
 )
@@ -61,7 +61,7 @@ computations. Default is \code{parallel::detectCores() - 1}. If
 parallelization.}
 
 \item{adaptive}{a logical flag indicating whether adaptive permutations
-should be performed. Default is \code{FALSE}. Only used if
+should be performed. Default is \code{TRUE}. Only used if
 \code{test == 'permutation'}.}
 
 \item{space_y}{a logical flag indicating whether the y thresholds are spaced out. 
