@@ -224,9 +224,10 @@ cit_gsa2 <- function(M,
       Sigma2 <- list()
       Sigma <- list()
       decomp <- list()
+      prop_gs <- list()
       
-      for (i in 1:length(geneset)){
-        Y <- M[,geneset[i]]
+      for (i in 1:length(genesets)){
+        Y <- M[,genesets[i]]
         
         n_Y_all <- length(Y)
         H <- n_Y_all*(solve(crossprod(modelmat)) %*% t(modelmat))[indexes_X, , drop=FALSE] # taille de Y , même pour chaque gène puisque X et Y ne changent pas
@@ -254,6 +255,7 @@ cit_gsa2 <- function(M,
           indi_pi[,j] <- indi_Y
         }
         prop <- colMeans(indi_pi)
+        prop_gs[[i]] <- prop
         
         Sigma2[[i]] <- 1/n_Y_all * tcrossprod(H) %x% (prop - prop %x% t(prop))
         Sigma[[i]] <- Sigma2[[i]]*upper.tri(Sigma2[[i]], diag = TRUE) +  t(Sigma2[[i]]*upper.tri(Sigma2[[i]], diag = FALSE))
@@ -261,6 +263,10 @@ cit_gsa2 <- function(M,
         
       } 
       
+      prop_gs_vec <- unlist(prop_gs)
+      Sigma2_old <- 1/n* tcrossprod(H) %x% (prop_gs_vec - prop_gs_vec %x% t(prop_gs_vec)) 
+      
+    
       decomp_vec <- sapply(decomp, "[[", "values")
       
       pval <- survey::pchisqsum(sum(test_stat_gs), lower.tail = FALSE, df = rep(1,length(decomp_vec)), 

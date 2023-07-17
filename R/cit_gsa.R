@@ -13,7 +13,7 @@ cit_gsa <- function(M,
                     number_y = 10,
                     genesets){
   
-  # check
+  # checks
   if(is.matrix(M)){
     M <- as.data.frame(M)
   }
@@ -222,8 +222,8 @@ cit_gsa <- function(M,
       test_stat_gs <- numeric()
       prop_gs <- list()
       
-      for (i in 1:length(geneset)){
-        Y <- M[,geneset[i]]
+      for (i in 1:length(genesets)){
+        Y <- M[,genesets[i]]
         
         n_Y_all <- length(Y)
         H <- n_Y_all*(solve(crossprod(modelmat)) %*% t(modelmat))[indexes_X, , drop=FALSE] # taille de Y , même pour chaque gène puisque X et Y ne changent pas
