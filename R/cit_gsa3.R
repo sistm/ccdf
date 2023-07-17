@@ -1,5 +1,5 @@
 
-cit_gsa <- function(M,
+cit_gsa3 <- function(M,
                     X,
                     Z = NULL,
                     test = c("asymptotic","permutation"),
