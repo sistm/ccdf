@@ -221,7 +221,6 @@ cit_gsa <- function(M,
       
       test_stat_gs <- numeric()
       prop_gs <- list()
-      
       for (i in 1:length(genesets)){
         Y <- M[,genesets[i]]
         
@@ -254,17 +253,23 @@ cit_gsa <- function(M,
         prop_gs[[i]] <- prop # prop pour chaque gènes du gs
         
       } 
-      
       prop_gs_vec <- unlist(prop_gs)
       
-      Sigma2 <- 1/n* tcrossprod(H) %x% (prop_gs_vec - prop_gs_vec %x% t(prop_gs_vec)) 
-      # utilise les proportion mise à la suite sous forme de vecteur
-      Sigma <- Sigma2*upper.tri(Sigma2, diag = TRUE) +  t(Sigma2*upper.tri(Sigma2, diag = FALSE))
+      Sigma2_test <- matrix(NA,length(prop_gs_vec),length(prop_gs_vec)) 
+      colnames(Sigma2_test) <- 1:length(prop_gs_vec)
+      # 1ère ligne fait toutes les colonnes, puis 2ème ligne ...
+      for (i in 1:nrow(Sigma2_test)){ 
+        for (j in 1:ncol(Sigma2_test)){ 
+          if (i<=j){ Sigma2_test[i,j] <- 1/n* tcrossprod(H)  * (prop_gs_vec[i] - prop_gs_vec[i]*prop_gs_vec[j])
+          } else { Sigma2_test[i,j] <- 1/n* tcrossprod(H) * (prop_gs_vec[j] - prop_gs_vec[i]*prop_gs_vec[j])}
+        }
+      }
       
-      decomp <- eigen(Sigma, symmetric=TRUE, only.values=TRUE)
+      decomp <- eigen(Sigma2_test, symmetric=TRUE, only.values=TRUE)
       
-      pval <- survey::pchisqsum(sum(test_stat_gs), lower.tail = FALSE, df = rep(1, ncol(Sigma)), #ncol(Sigma)
+      pval <- survey::pchisqsum(sum(test_stat_gs), lower.tail = FALSE, df = rep(1, ncol(Sigma2_test)), 
                                 a = decomp$values, method = "saddlepoint")
+      
       # ncol(Sigma= nombre de beta) : tester ravec length(decomp) : ne fonctione pas
       #/ nombre beta total (ne fonctionne pas  = ncol(sigma))
       # / nombre beta pour 1 gene ?
