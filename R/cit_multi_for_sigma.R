@@ -118,7 +118,7 @@
 
 
 
-cit_multi <- function(M,
+cit_multi_for_sigma <- function(M,
                       X,
                       Z = NULL,
                       test = c("asymptotic","permutation"),
