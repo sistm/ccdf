@@ -317,7 +317,7 @@ cit_multi <- function(M,
     n_perm <- NA
     res <- do.call("rbind", pbapply::pblapply(1:r, 
                                               function(j){
-                                                cit_asymp(M[, j], X, Z, 
+                                                cit_asymp_for_sigma(M[, j], X, Z, 
                                                           space_y = space_y, 
                                                           number_y = number_y)
                                               }, 
