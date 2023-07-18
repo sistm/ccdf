@@ -37,7 +37,7 @@
 #'res_asymp <- cit_asymp(Y,data.frame(X=X))
 
 
-cit_asymp <- function(Y, X, Z = NULL, space_y = FALSE, number_y = length(unique(Y))){
+cit_asymp_for_sigma <- function(Y, X, Z = NULL, space_y = FALSE, number_y = length(unique(Y))){
   
   # computations independent of Y: should be computed only once before the pbapply loop ----
   
