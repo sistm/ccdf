@@ -12,10 +12,10 @@ knitr::opts_chunk$set(
 )
 ```
 
-# `citcdf`
+# `citcdf` <a><img src='man/figures/logo.svg' align="right" height="139" /></a>
 
-[![CRAN status](https://www.r-pkg.org/badges/version/ccdf)](https://CRAN.R-project.org/package=ccdf)
-[![R-CMD-check](https://github.com/sistm/ccdf/workflows/R-CMD-check/badge.svg)](https://github.com/sistm/ccdf/actions)
+[![CRAN status](https://www.r-pkg.org/badges/version/citcdf)](https://CRAN.R-project.org/package=citcdf)
+[![R-CMD-check](https://github.com/sistm/citcdf/workflows/R-CMD-check/badge.svg)](https://github.com/sistm/citcdf/actions)
 
 ## Overview
 
@@ -32,13 +32,7 @@ The approach implemented in this package is detailed in the following article:
 ## Installation
 
 
-**`ccdf` is available from CRAN.**
-```{r CRAN-install, eval=FALSE}
-install.packages("citcdf")
-```
-
-
-**To install `ccdf`, you can download the development version on [GitHub](https://github.com/Mgauth/ccdf).**
+**`citcdf` is available from [GitHub](https://github.com/sistm/citcdf):**
 ```{r GitHub-install, eval=FALSE}
 #install.packages("devtools")
 devtools::install_github("sistm/citcdf")

@@ -1,11 +1,11 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# `ccdf`
+# `citcdf` <a><img src='man/figures/logo.svg' align="right" height="139" /></a>
 
 [![CRAN
-status](https://www.r-pkg.org/badges/version/ccdf)](https://CRAN.R-project.org/package=ccdf)
-[![R-CMD-check](https://github.com/sistm/ccdf/workflows/R-CMD-check/badge.svg)](https://github.com/sistm/ccdf/actions)
+status](https://www.r-pkg.org/badges/version/citcdf)](https://CRAN.R-project.org/package=citcdf)
+[![R-CMD-check](https://github.com/sistm/citcdf/workflows/R-CMD-check/badge.svg)](https://github.com/sistm/citcdf/actions)
 
 ## Overview
 
@@ -26,14 +26,8 @@ article:
 
 ## Installation
 
-**`ccdf` is available from CRAN.**
-
-``` r
-install.packages("citcdf")
-```
-
-**To install `ccdf`, you can download the development version on
-[GitHub](https://github.com/Mgauth/ccdf).**
+**`citcdf` is available from
+[GitHub](https://github.com/sistm/citcdf):**
 
 ``` r
 #install.packages("devtools")
