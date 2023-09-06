@@ -54,3 +54,5 @@ res_perm <- cit(exprmat=Y, variable2test=X, test="permutation",
 
 – Marine Gauthier, Denis Agniel, Kalidou Ba, Rodolphe Thiébaut & Boris
 Hejblum
+
+*hex illustration by Jérôme Dubois.*
