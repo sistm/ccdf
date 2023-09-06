@@ -31,7 +31,7 @@ article:
 
 ``` r
 #install.packages("devtools")
-devtools::install_github("sistm/citcdf")
+remotes::install_github("sistm/citcdf")
 ```
 
 ## Example

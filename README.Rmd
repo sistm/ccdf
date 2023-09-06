@@ -35,7 +35,7 @@ The approach implemented in this package is detailed in the following article:
 **`citcdf` is available from [GitHub](https://github.com/sistm/citcdf):**
 ```{r GitHub-install, eval=FALSE}
 #install.packages("devtools")
-devtools::install_github("sistm/citcdf")
+remotes::install_github("sistm/citcdf")
 ```
 
 
