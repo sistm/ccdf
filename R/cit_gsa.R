@@ -1,5 +1,79 @@
 
-cit_gsa_final <- function(M,
+#' Conditional independance test for gene set analysis
+#'
+#' @param M a \code{data.frame} or a \code{matrix} of size \code{n x r} 
+#'containing the different Y variables to test for conditional independence 
+#'with \code{X} adjusted on \code{Z}.
+#'
+#' @param X a data frame of size \code{n x p} of numeric or factor vector(s) 
+#'containing the variable(s) to be tested for conditional independence 
+#'against \code{X} adjusted on \code{Z}. Multiple variables (\code{p>1}) 
+#'are only supported by the asymptotic test.
+#'
+#' @param Z a data frame of size \code{n x q} of numeric or factor vector(s) 
+#'containing the covariate(s) to condition the independence 
+#'test upon. Multiple covariates (\code{q>1}) are only supported by the 
+#'asymptotic test. 
+#'
+#'@param test a character string indicating whether the \code{'asymptotic'} or 
+#'the \code{'permutation'} test is computed.
+#'Default is \code{'asymptotic'}.
+#'
+#'@param n_perm the number of permutations. Default is \code{100}. Only used if
+#'\code{test == 'permutation'}.
+#'
+#'@param adaptive a logical flag indicating whether adaptive permutations
+#'should be performed. Default is \code{TRUE}. Only used if
+#'\code{test == 'permutation'}.
+#'
+#'@param n_perm_adaptive a vector of the increasing numbers of 
+#'adaptive permutations when \code{adaptive} is \code{TRUE}. 
+#'\code{length(n_perm_adaptive)} should be equal to \code{length(thresholds)+1}. 
+#'Default is \code{c(100, 150, 250, 500)}.
+#'
+#'@param thresholds a vector of the decreasing thresholds to compute
+#'adaptive permutations when \code{adaptive} is \code{TRUE}. 
+#'\code{length(thresholds)} should be equal to \code{length(n_perm_adaptive)-1}.
+#'Default is \code{c(0.1, 0.05, 0.01)}.
+#'
+#'
+#'@param parallel a logical flag indicating whether parallel computation
+#'should be enabled. Default is \code{TRUE} if \code{interactive()} is 
+#'\code{TRUE}, else is \code{FALSE}.
+#'
+#'@param n_cpus an integer indicating the number of cores to be used for the 
+#'computations. Default is \code{parallel::detectCores() - 1}. If 
+#'\code{n_cpus = 1}, then sequential computations are used without any 
+#'parallelization.
+#'
+#'@param space_y a logical flag indicating whether the y thresholds are spaced out. 
+#'When \code{space_y} is \code{TRUE}, a regular sequence between the minimum and 
+#'the maximum of the observations is used. If \code{FALSE}, each unique 
+#'observed expression value is used as a distinct threshold. Default is \code{TRUE}.
+#'
+#'@param number_y an integer value indicating the number of y thresholds (and therefore
+#'the number of regressions) to perform the test. Default is 10.
+#'
+#' @param geneset 
+#'
+#'@return A list with the following elements:\itemize{
+#'   \item \code{which_test}: a character string carrying forward the value of
+#'   the '\code{which_test}' argument indicating which test was performed (either
+#'   'asymptotic' or 'permutation').
+#'   \item \code{n_perm}: an integer carrying forward the value of the
+#'   '\code{n_perm}' argument or '\code{n_perm_adaptive}' indicating the number of permutations performed
+#'   (\code{NA} if asymptotic test was performed).
+#'   \item \code{pval}: computed p-values. A data frame with one raw for
+#'   each gene set, and with 2 columns: the first one '\code{raw_pval}' contains
+#'   the raw p-values, the second one '\code{adj_pval}' contains the FDR adjusted p-values
+#'   using Benjamini-Hochberg correction.
+#' }
+#' FINIR QUAND AURA FAIT CODE POUR GMT ET BIOCSET
+#' @export
+#'
+#' @examples
+#' #FAIRE
+cit_gsa <- function(M,
                       X,
                       Z = NULL,
                       test = c("asymptotic","permutation"),
