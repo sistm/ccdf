@@ -1,17 +1,17 @@
 
-cit_gsa <- function(M,
-                    X,
-                    Z = NULL,
-                    test = c("asymptotic","permutation"),
-                    n_perm = 100,
-                    n_perm_adaptive = c(n_perm, n_perm, n_perm*3, n_perm*5),
-                    thresholds = c(0.1,0.05,0.01),
-                    parallel = interactive(),
-                    n_cpus = detectCores() - 1,
-                    adaptive = FALSE,
-                    space_y = TRUE,
-                    number_y = 10,
-                    genesets){
+cit_gsa_final <- function(M,
+                      X,
+                      Z = NULL,
+                      test = c("asymptotic","permutation"),
+                      n_perm = 100,
+                      n_perm_adaptive = c(n_perm, n_perm, n_perm*3, n_perm*5),
+                      thresholds = c(0.1,0.05,0.01),
+                      parallel = interactive(),
+                      n_cpus = detectCores() - 1,
+                      adaptive = FALSE,
+                      space_y = TRUE,
+                      number_y = 10,
+                      geneset){
   
   # checks
   if(is.matrix(M)){
@@ -64,6 +64,7 @@ cit_gsa <- function(M,
       }
     }
   }
+  
   
   if (space_y){
     if (is.null(number_y)){
@@ -197,17 +198,9 @@ cit_gsa <- function(M,
   } else if (test=="asymptotic"){
     ## asymptotic ----
     n_perm <- NA
-    # res : les p-val + stat de test pour chaque gènes du geneset
-    # df : p-val + stat de test pour tous le geneset
     
-    if(is.vector(genesets)){
-      res <- do.call("rbind", lapply(1:length(genesets),function(j){
-        cit_asymp(M[, genesets[j]], X, Z, # prend la colonne du gène dans M qui correspond au nom du gene de genesets
-                  space_y = space_y, 
-                  number_y = number_y)
-      }))
+    if(is.vector(geneset)){ # gs vecteur (indices des gènes du gs) ----
       
-      # p-val ----
       if (is.null(Z)){ 
         colnames(X) <- sapply(1:ncol(X), function(i){paste0('X',i)})
         modelmat <- as.matrix(model.matrix(~.,data=X))
@@ -219,17 +212,19 @@ cit_gsa <- function(M,
       
       indexes_X <- which(substring(colnames(modelmat), 1, 1) == "X")
       
+      
       test_stat_gs <- numeric()
       prop_gs <- list()
-      
-      for (i in 1:length(genesets)){
-        Y <- M[,genesets[i]]
+      indi_pi_gs <- list()
+
+      for (i in 1:length(geneset)){ 
+        
+        Y <- M[,geneset[i]]
         
         n_Y_all <- length(Y)
         H <- n_Y_all*(solve(crossprod(modelmat)) %*% t(modelmat))[indexes_X, , drop=FALSE] # taille de Y , même pour chaque gène puisque X et Y ne changent pas
-        number_y = length(unique(Y))
         
-        
+        # 1) calcule de la stat de test ----
         if (space_y){
           y <- seq(from = ifelse(length(which(Y==0))==0, min(Y), min(Y[-which(Y==0)])),
                    to = max(Y[-which.max(as.matrix(Y))]), length.out = number_y)
@@ -244,40 +239,82 @@ cit_gsa <- function(M,
         
         test_stat_gs[i] <- test_stat # stat de test pour chaque gène du gs
         
-        
+       # 2) calcule de pi ----
         indi_pi <- matrix(NA, n_Y_all, (p-1)) 
         for (j in 1:(p-1)){ 
           indi_Y <- 1*(Y<=y[j])
           indi_pi[,j] <- indi_Y
         }
+        indi_pi_gs[[i]] <- indi_pi
         prop <- colMeans(indi_pi)
         prop_gs[[i]] <- prop # prop pour chaque gènes du gs
         
       } 
       
+      indi_pi_gs_tab <- do.call(cbind, indi_pi_gs)
       prop_gs_vec <- unlist(prop_gs)
+
       
-      Sigma2 <- 1/n* tcrossprod(H) %x% (prop_gs_vec - prop_gs_vec %x% t(prop_gs_vec)) 
-      # utilise les proportion mise à la suite sous forme de vecteur
+      # 3) création de la matrice Sigma ----
+      Sigma2 <- matrix(NA,length(prop_gs_vec)*nrow(H),length(prop_gs_vec)*nrow(H)) 
+      new_prop <- matrix(NA,length(prop_gs_vec),length(prop_gs_vec))
+      
+      if (nrow(H)>1){ # > 1 conditions
+        
+        for (i in 1:nrow(new_prop)){  #  calcule de la nouvelle proportion/du nouveau pi = celle du gene set : ici une matrice
+          for(j in 1:ncol(new_prop)){
+            
+            new_prop[i,j] <- mean((indi_pi_gs_tab[,i]-prop_gs_vec[i]) * (indi_pi_gs_tab[,j]-prop_gs_vec[j])) + prop_gs_vec[i] * prop_gs_vec[j] 
+          
+            }
+        }
+        
+        Sigma2 <- 1/n * tcrossprod(H) %x%  (new_prop - prop_gs_vec %x%  t(prop_gs_vec))
+        
+        
+      } else { # 1 condition  
+        
+        for (i in 1:nrow(Sigma2)) {  
+          for (j in 1:ncol(Sigma2)) {
+
+            new_prop <- mean((indi_pi_gs_tab[,i]-prop_gs_vec[i]) * (indi_pi_gs_tab[,j]-prop_gs_vec[j])) + prop_gs_vec[i] * prop_gs_vec[j] 
+            
+            Sigma2[i, j] <- 1/n * tcrossprod(H) * (new_prop - prop_gs_vec[i] * prop_gs_vec[j])
+          }
+        }
+      }
+        
+    } else if (endsWith(geneset, ".gmt")){ # gs format gmt (liste) ----
+      
+     
+        
+      
+    } else if (is(geneset,"BiocSet")){ # gs format biocset (liste) ----
+      
+    }
+
+      # inutile car boucle créé sigma
       Sigma <- Sigma2*upper.tri(Sigma2, diag = TRUE) +  t(Sigma2*upper.tri(Sigma2, diag = FALSE))
       
+      # isSymmetric(Sigma)
+      
+
       decomp <- eigen(Sigma, symmetric=TRUE, only.values=TRUE)
+      #decomp2 <- svd(Sigma)$d
+
+      pval <- survey::pchisqsum(sum(test_stat_gs), lower.tail = FALSE, df = rep(1, ncol(Sigma)),a =decomp$values , method = "saddlepoint") 
+      #pval <- survey::pchisqsum(sum(test_stat_gs), lower.tail = FALSE, df = rep(1, ncol(Sigma)),a =svd(Sigma)$d , method = "saddlepoint")
       
-      pval <- survey::pchisqsum(sum(test_stat_gs), lower.tail = FALSE, df = rep(1, ncol(Sigma)), #ncol(Sigma)
-                                a = decomp$values, method = "saddlepoint")
-      # ncol(Sigma= nombre de beta) : tester ravec length(decomp) : ne fonctione pas
-      #/ nombre beta total (ne fonctionne pas  = ncol(sigma))
-      # / nombre beta pour 1 gene ?
-      
+    
       # df de résultats
       df <- data.frame(raw_pval=pval,
                        adj_pval =p.adjust(pval, method = "BH"),
                        test_statistic = sum(test_stat_gs))
       
       
-    } 
+  } 
     
-  }
+  
   output <- df
   class(output) <- "cit_gsa"
   return(output)
