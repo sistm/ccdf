@@ -54,7 +54,7 @@
 #'@param number_y an integer value indicating the number of y thresholds (and therefore
 #'the number of regressions) to perform the test. Default is 10.
 #'
-#' @param geneset 
+#'@param geneset FAIRE
 #'
 #'@return A list with the following elements:\itemize{
 #'   \item \code{which_test}: a character string carrying forward the value of
@@ -272,7 +272,7 @@ cit_gsa <- function(M,
   } else if (test=="asymptotic"){
     ## asymptotic ----
     n_perm <- NA
-    
+
     if(is.vector(geneset)){ # gs vecteur (indices des gènes du gs) ----
       
       if (is.null(Z)){ 
@@ -287,7 +287,7 @@ cit_gsa <- function(M,
       indexes_X <- which(substring(colnames(modelmat), 1, 1) == "X")
       
       
-      test_stat_gs <- numeric()
+      test_stat_gs <- NA
       prop_gs <- list()
       indi_pi_gs <- list()
 
@@ -378,9 +378,12 @@ cit_gsa <- function(M,
     
       
           
-    } else if (endsWith(geneset, ".gmt") | is(geneset,"BiocSet")){ # gs format gmt ou biocset (liste) ----
+    } else if ( is(geneset,"GSA.genesets") | is(geneset,"BiocSet")){ # gs format gmt ou biocset (liste) ----
       
-      if (endsWith(geneset, ".gmt")) {
+     
+      
+      # mise en forme des données : liste
+      if (is(geneset,"GSA.genesets")) {
         geneset <- geneset$genesets
       } else if (is(geneset,"BiocSet")){
         geneset<- BiocSet::es_elementset(geneset)
@@ -390,11 +393,13 @@ cit_gsa <- function(M,
                             geneset[geneset$set == x,]$element
                           }
         )
-        names(geneset) <- geneset_names
+        
       }
       
+      colnames(M) <- unique(unlist(geneset))
       # Colonnes de M doivent avoir le même nom que le nom des gènes dans fichiers gmt ou biocset
-      # dans les test j'ai mis exatement e même nombres de gènes dans M (de colonnes) que les fichiers gmt/biocset
+      # dans les tests j'ai mis exatement le même nombres de gènes dans M (de colonnes) que les fichiers gmt/biocset
+      
       
       if (is.null(Z)){ 
         colnames(X) <- sapply(1:ncol(X), function(i){paste0('X',i)})
@@ -407,24 +412,23 @@ cit_gsa <- function(M,
       
       indexes_X <- which(substring(colnames(modelmat), 1, 1) == "X")
       
-      # initialisation pour chaque gs du gmt
+      # initialisation pour chaque gs du gmt/biocset
       test_stat_list <- list()
       Sigma2_list <- list()
       decomp_list <- list()
       pval <- NA
       
       
-      
-      for (k in 1:length(gsa_test)){ # chaque liste de gs du gmt
+      for (k in 1:length(geneset)){ # chaque liste de gs du gmt/biocset
         
         # initialisation pour chaque gene du gs
-        test_stat_gs <- numeric()
+        test_stat_gs <- NA
         prop_gs <- list()
         indi_pi_gs <- list()
         
-        for (i in 1:length(gsa_test[[k]])){ # chaque gène du gs
+        for (i in 1:length(geneset[[k]])){ # chaque gène du gs
           
-          Y <- M[,gsa_test[[k]][i]]
+          Y <- M[,geneset[[k]][i]]
           
           n_Y_all <- length(Y)
           H <- n_Y_all*(solve(crossprod(modelmat)) %*% t(modelmat))[indexes_X, , drop=FALSE] # taille de Y , même pour chaque gène puisque X et Y ne changent pas
@@ -507,19 +511,14 @@ cit_gsa <- function(M,
 
   } 
     
-  
-  output <- df
-  class(output) <- "cit_gsa"
-  return(output)
-  
-  
   #rownames(df) <- M_colnames
   
-  #output <- list(which_test = test,
-  #n_perm = n_perm, 
-  #pvals = df)
+  output <- list(which_test = test,
+                 n_perm = n_perm, 
+                 pvals = df)
   
-  # CHANGER SORTIE SI LISTE !!
+  class(output) <- "cit_gsa"
+  return(output)
   
   
 }
