@@ -3,6 +3,7 @@
 S3method(plot,cit_multi)
 export(ccdf)
 export(cit_asymp)
+export(cit_gsa)
 export(cit_multi)
 export(cit_perm)
 export(perm_cont)
