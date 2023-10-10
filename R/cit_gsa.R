@@ -15,6 +15,13 @@
 #'test upon. Multiple covariates (\code{q>1}) are only supported by the 
 #'asymptotic test. 
 #'
+#'#'@param geneset a vector, a gmt file or a BiocSet object. 
+#'If the parameter is \itemize{
+#'  \item a vector : corresponds to the gene index in the matrix \code{M}
+#'  \item a gmt file : the genes names of each genes set in the file must be the same as those of the columns of the matrix M
+#'  \item a BiocSet object : the genes names of each genes set in the object must be the same as those of the columns of the matrix M
+#'}
+#'
 #'@param test a character string indicating whether the \code{'asymptotic'} or 
 #'the \code{'permutation'} test is computed.
 #'Default is \code{'asymptotic'}.
@@ -53,13 +60,6 @@
 #'
 #'@param number_y an integer value indicating the number of y thresholds (and therefore
 #'the number of regressions) to perform the test. Default is 10.
-#'
-#'@param geneset a vector, a gmt file or a BiocSet object. 
-#'If the parameter is \itemize{
-#'  \item a vector : corresponds to the gene index in the matrix \code{M}
-#'  \item a gmt file : the genes names of each genes set in the file must be the same as those of the columns of the matrix M
-#'  \item a BiocSet object : the genes names of each genes set in the object must be the same as those of the columns of the matrix M
-#'}
 #'   
 #'@return A list with the following elements:\itemize{
 #'   \item \code{which_test}: a character string carrying forward the value of
