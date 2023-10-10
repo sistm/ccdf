@@ -54,8 +54,13 @@
 #'@param number_y an integer value indicating the number of y thresholds (and therefore
 #'the number of regressions) to perform the test. Default is 10.
 #'
-#'@param geneset FAIRE
-#'
+#'@param geneset a vector, a gmt file or a BiocSet object. 
+#'If the parameter is \itemize{
+#'  \item a vector : corresponds to the gene index in the matrix \code{M}
+#'  \item a gmt file : the genes names of each genes set in the file must be the same as those of the columns of the matrix M
+#'  \item a BiocSet object : the genes names of each genes set in the object must be the same as those of the columns of the matrix M
+#'}
+#'   
 #'@return A list with the following elements:\itemize{
 #'   \item \code{which_test}: a character string carrying forward the value of
 #'   the '\code{which_test}' argument indicating which test was performed (either
@@ -68,11 +73,11 @@
 #'   the raw p-values, the second one '\code{adj_pval}' contains the FDR adjusted p-values
 #'   using Benjamini-Hochberg correction.
 #' }
-#' FINIR QUAND AURA FAIT CODE POUR GMT ET BIOCSET
+#' 
 #' @export
 #'
 #' @examples
-#' #FAIRE
+#' #TO DO 
 cit_gsa <- function(M,
                       X,
                       Z = NULL,
@@ -98,8 +103,10 @@ cit_gsa <- function(M,
   stopifnot(is.logical(parallel))
   stopifnot(is.logical(adaptive))
   stopifnot(is.numeric(n_perm))
+
   
   M_colnames <- colnames(M)
+
   
   if (sum(is.na(M)) > 1) {
     warning("'M' contains", sum(is.na(M)), "NA values. ",
@@ -273,27 +280,57 @@ cit_gsa <- function(M,
     ## asymptotic ----
     n_perm <- NA
 
-    if(is.vector(geneset)){ # gs vecteur (indices des gènes du gs) ----
+    # mise en forme des données : liste + vérif noms colonnes
+    if (inherits(geneset,"GSA.genesets")) {
+      geneset <- geneset$genesets
+      # Stop si aucun id des colonnes de M  ne match avec les id des gene set
+      if (all(M_colnames != unique(unlist(geneset)))){ # si vrai affiche msg
+        stop("No column names in M match geneset identifiers")
+      } # si 1 colonne à le même nom pas d'erreur, mais si identifiant numéros va mettre erreur docn NON !!
+    } else if (inherits(geneset,"BiocSet")){
+      geneset<- BiocSet::es_elementset(geneset)
+      geneset <- lapply(X  = unique(geneset$set),
+                        FUN = function(x){
+                          geneset[geneset$set == x,]$element
+                        }
+      )
+      # Stop si aucun id des colonnes de M  ne match avec les id des gene set
+      if (all(M_colnames != unique(unlist(geneset)))){ # si vrai affiche msg
+        stop("No column names in M match geneset identifiers")
+      } # si 1 colonne à le même nom pas d'erreur, mais si identifiant numéros va mettre erreur docn NON !!
+    } else if(is.vector(geneset)){
+      geneset <- list(geneset)
+    }
+    
+    
+    if (is.null(Z)){ 
+      colnames(X) <- sapply(1:ncol(X), function(i){paste0('X',i)})
+      modelmat <- as.matrix(model.matrix(~.,data=X))
+    } else {
+      colnames(X) <- sapply(1:ncol(X), function(i){paste0('X',i)})
+      colnames(Z) <- sapply(1:ncol(Z), function(i){paste0('Z',i)})
+      modelmat <- as.matrix(model.matrix(~.,data=cbind(X,Z)))
+    }
+    
+    indexes_X <- which(substring(colnames(modelmat), 1, 1) == "X")
+    
+    # initialisation pour chaque gs du gmt/biocset
+    test_stat_list <- list()
+    Sigma2_list <- list()
+    decomp_list <- list()
+    pval <- NA
+    
+    
+    for (k in 1:length(geneset)){ # chaque liste de gs du gmt/biocset
       
-      if (is.null(Z)){ 
-        colnames(X) <- sapply(1:ncol(X), function(i){paste0('X',i)})
-        modelmat <- as.matrix(model.matrix(~.,data=X))
-      } else {
-        colnames(X) <- sapply(1:ncol(X), function(i){paste0('X',i)})
-        colnames(Z) <- sapply(1:ncol(Z), function(i){paste0('Z',i)})
-        modelmat <- as.matrix(model.matrix(~.,data=cbind(X,Z)))
-      }
-      
-      indexes_X <- which(substring(colnames(modelmat), 1, 1) == "X")
-      
-      
+      # initialisation pour chaque gene du gs
       test_stat_gs <- NA
       prop_gs <- list()
       indi_pi_gs <- list()
-
-      for (i in 1:length(geneset)){ 
+      
+      for (i in 1:length(geneset[[k]])){ # chaque gène du gs
         
-        Y <- M[,geneset[i]]
+        Y <- M[,geneset[[k]][i]]
         
         n_Y_all <- length(Y)
         H <- n_Y_all*(solve(crossprod(modelmat)) %*% t(modelmat))[indexes_X, , drop=FALSE] # taille de Y , même pour chaque gène puisque X et Y ne changent pas
@@ -313,7 +350,8 @@ cit_gsa <- function(M,
         
         test_stat_gs[i] <- test_stat # stat de test pour chaque gène du gs
         
-       # 2) calcule de pi ----
+        
+        # 2) calcule de pi ----
         indi_pi <- matrix(NA, n_Y_all, (p-1)) 
         for (j in 1:(p-1)){ 
           indi_Y <- 1*(Y<=y[j])
@@ -324,10 +362,11 @@ cit_gsa <- function(M,
         prop_gs[[i]] <- prop # prop pour chaque gènes du gs
         
       } 
+      test_stat_list[[k]] <- test_stat_gs
       
       indi_pi_gs_tab <- do.call(cbind, indi_pi_gs)
       prop_gs_vec <- unlist(prop_gs)
-
+      
       
       # 3) création de la matrice Sigma ----
       Sigma2 <- matrix(NA,length(prop_gs_vec)*nrow(H),length(prop_gs_vec)*nrow(H)) 
@@ -339,8 +378,8 @@ cit_gsa <- function(M,
           for(j in 1:ncol(new_prop)){
             
             new_prop[i,j] <- mean((indi_pi_gs_tab[,i]-prop_gs_vec[i]) * (indi_pi_gs_tab[,j]-prop_gs_vec[j])) + prop_gs_vec[i] * prop_gs_vec[j] 
-          
-            }
+            
+          }
         }
         
         Sigma2 <- 1/n * tcrossprod(H) %x%  (new_prop - prop_gs_vec %x%  t(prop_gs_vec))
@@ -350,166 +389,29 @@ cit_gsa <- function(M,
         
         for (i in 1:nrow(Sigma2)) {  
           for (j in 1:ncol(Sigma2)) {
-
+            
             new_prop <- mean((indi_pi_gs_tab[,i]-prop_gs_vec[i]) * (indi_pi_gs_tab[,j]-prop_gs_vec[j])) + prop_gs_vec[i] * prop_gs_vec[j] 
             
             Sigma2[i, j] <- 1/n * tcrossprod(H) * (new_prop - prop_gs_vec[i] * prop_gs_vec[j])
           }
         }
       }
+      Sigma2_list[[k]] <- Sigma2
       
-      # inutile car boucle créé sigma
-      Sigma <- Sigma2*upper.tri(Sigma2, diag = TRUE) +  t(Sigma2*upper.tri(Sigma2, diag = FALSE))
+      decomp_list[[k]] <- eigen(Sigma2_list[[k]], symmetric=TRUE, only.values=TRUE)
       
-      # isSymmetric(Sigma)
+      pval[k] <- survey::pchisqsum(sum(test_stat_list[[k]]), lower.tail = FALSE, df = rep(1, ncol(Sigma2_list[[k]])),a =decomp_list[[k]]$values , method = "saddlepoint") 
       
-      
-      decomp <- eigen(Sigma, symmetric=TRUE, only.values=TRUE)
-      #decomp2 <- svd(Sigma)$d
-      
-      pval <- survey::pchisqsum(sum(test_stat_gs), lower.tail = FALSE, df = rep(1, ncol(Sigma)),a =decomp$values , method = "saddlepoint") 
-      #pval <- survey::pchisqsum(sum(test_stat_gs), lower.tail = FALSE, df = rep(1, ncol(Sigma)),a =svd(Sigma)$d , method = "saddlepoint")
-      
-      
-      # df de résultats
-      df <- data.frame(raw_pval=pval,
-                       adj_pval =p.adjust(pval, method = "BH"),
-                       test_statistic = sum(test_stat_gs))
+    }
     
-      
-          
-    } else if ( is(geneset,"GSA.genesets") | is(geneset,"BiocSet")){ # gs format gmt ou biocset (liste) ----
-      
-     
-      
-      # mise en forme des données : liste
-      if (is(geneset,"GSA.genesets")) {
-        geneset <- geneset$genesets
-      } else if (is(geneset,"BiocSet")){
-        geneset<- BiocSet::es_elementset(geneset)
-        geneset_names <- unique(geneset$set)
-        geneset <- lapply(X  = unique(geneset$set),
-                          FUN = function(x){
-                            geneset[geneset$set == x,]$element
-                          }
-        )
-        
-      }
-      
-      colnames(M) <- unique(unlist(geneset))
-      # Colonnes de M doivent avoir le même nom que le nom des gènes dans fichiers gmt ou biocset
-      # dans les tests j'ai mis exatement le même nombres de gènes dans M (de colonnes) que les fichiers gmt/biocset
-      
-      
-      if (is.null(Z)){ 
-        colnames(X) <- sapply(1:ncol(X), function(i){paste0('X',i)})
-        modelmat <- as.matrix(model.matrix(~.,data=X))
-      } else {
-        colnames(X) <- sapply(1:ncol(X), function(i){paste0('X',i)})
-        colnames(Z) <- sapply(1:ncol(Z), function(i){paste0('Z',i)})
-        modelmat <- as.matrix(model.matrix(~.,data=cbind(X,Z)))
-      }
-      
-      indexes_X <- which(substring(colnames(modelmat), 1, 1) == "X")
-      
-      # initialisation pour chaque gs du gmt/biocset
-      test_stat_list <- list()
-      Sigma2_list <- list()
-      decomp_list <- list()
-      pval <- NA
-      
-      
-      for (k in 1:length(geneset)){ # chaque liste de gs du gmt/biocset
-        
-        # initialisation pour chaque gene du gs
-        test_stat_gs <- NA
-        prop_gs <- list()
-        indi_pi_gs <- list()
-        
-        for (i in 1:length(geneset[[k]])){ # chaque gène du gs
-          
-          Y <- M[,geneset[[k]][i]]
-          
-          n_Y_all <- length(Y)
-          H <- n_Y_all*(solve(crossprod(modelmat)) %*% t(modelmat))[indexes_X, , drop=FALSE] # taille de Y , même pour chaque gène puisque X et Y ne changent pas
-          
-          # 1) calcule de la stat de test ----
-          if (space_y){
-            y <- seq(from = ifelse(length(which(Y==0))==0, min(Y), min(Y[-which(Y==0)])),
-                     to = max(Y[-which.max(as.matrix(Y))]), length.out = number_y)
-          } else{
-            y <- sort(unique(Y))
-          }
-          p <- length(y)
-          
-          index_jumps <- sapply(y[-p], function(i){sum(Y <= i)}) 
-          beta <- c(apply(X = H[, order(Y), drop=FALSE], MARGIN = 1, FUN = cumsum)[index_jumps, ]) / n_Y_all # même nb que seuil
-          test_stat <- sum(beta^2) * n_Y_all
-          
-          test_stat_gs[i] <- test_stat # stat de test pour chaque gène du gs
-          
-          
-          # 2) calcule de pi ----
-          indi_pi <- matrix(NA, n_Y_all, (p-1)) 
-          for (j in 1:(p-1)){ 
-            indi_Y <- 1*(Y<=y[j])
-            indi_pi[,j] <- indi_Y
-          }
-          indi_pi_gs[[i]] <- indi_pi
-          prop <- colMeans(indi_pi)
-          prop_gs[[i]] <- prop # prop pour chaque gènes du gs
-          
-        } 
-        test_stat_list[[k]] <- test_stat_gs
-        
-        indi_pi_gs_tab <- do.call(cbind, indi_pi_gs)
-        prop_gs_vec <- unlist(prop_gs)
-        
-        
-        # 3) création de la matrice Sigma ----
-        Sigma2 <- matrix(NA,length(prop_gs_vec)*nrow(H),length(prop_gs_vec)*nrow(H)) 
-        new_prop <- matrix(NA,length(prop_gs_vec),length(prop_gs_vec))
-        
-        if (nrow(H)>1){ # > 1 conditions
-          
-          for (i in 1:nrow(new_prop)){  #  calcule de la nouvelle proportion/du nouveau pi = celle du gene set : ici une matrice
-            for(j in 1:ncol(new_prop)){
-              
-              new_prop[i,j] <- mean((indi_pi_gs_tab[,i]-prop_gs_vec[i]) * (indi_pi_gs_tab[,j]-prop_gs_vec[j])) + prop_gs_vec[i] * prop_gs_vec[j] 
-              
-            }
-          }
-          
-          Sigma2 <- 1/n * tcrossprod(H) %x%  (new_prop - prop_gs_vec %x%  t(prop_gs_vec))
-          
-          
-        } else { # 1 condition  
-          
-          for (i in 1:nrow(Sigma2)) {  
-            for (j in 1:ncol(Sigma2)) {
-              
-              new_prop <- mean((indi_pi_gs_tab[,i]-prop_gs_vec[i]) * (indi_pi_gs_tab[,j]-prop_gs_vec[j])) + prop_gs_vec[i] * prop_gs_vec[j] 
-              
-              Sigma2[i, j] <- 1/n * tcrossprod(H) * (new_prop - prop_gs_vec[i] * prop_gs_vec[j])
-            }
-          }
-        }
-        Sigma2_list[[k]] <- Sigma2
-        
-        decomp_list[[k]] <- eigen(Sigma2_list[[k]], symmetric=TRUE, only.values=TRUE)
-        
-        pval[k] <- survey::pchisqsum(sum(test_stat_list[[k]]), lower.tail = FALSE, df = rep(1, ncol(Sigma2_list[[k]])),a =decomp_list[[k]]$values , method = "saddlepoint") 
-        
-      }
-      
-      df <- data.frame(raw_pval=pval,
-                       adj_pval =p.adjust(pval, method = "BH"),
-                       test_statistic = unlist(lapply(test_stat_list,sum)))
-
-      
+    df <- data.frame(raw_pval=pval,
+                     adj_pval =p.adjust(pval, method = "BH"),
+                     test_statistic = unlist(lapply(test_stat_list,sum)))
+    
+    
+    
     } 
 
-  } 
     
   #rownames(df) <- M_colnames
   
@@ -519,6 +421,7 @@ cit_gsa <- function(M,
   
   class(output) <- "cit_gsa"
   return(output)
+
   
   
 }
