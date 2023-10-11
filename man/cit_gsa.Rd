@@ -33,14 +33,7 @@ are only supported by the asymptotic test.}
 \item{Z}{a data frame of size \code{n x q} of numeric or factor vector(s) 
 containing the covariate(s) to condition the independence 
 test upon. Multiple covariates (\code{q>1}) are only supported by the 
-asymptotic test. 
-
-#'@param geneset a vector, a gmt file or a BiocSet object. 
-If the parameter is \itemize{
- \item a vector : corresponds to the gene index in the matrix \code{M}
- \item a gmt file : the genes names of each genes set in the file must be the same as those of the columns of the matrix M
- \item a BiocSet object : the genes names of each genes set in the object must be the same as those of the columns of the matrix M
-}}
+asymptotic test.}
 
 \item{test}{a character string indicating whether the \code{'asymptotic'} or 
 the \code{'permutation'} test is computed.
@@ -79,6 +72,13 @@ observed expression value is used as a distinct threshold. Default is \code{TRUE
 
 \item{number_y}{an integer value indicating the number of y thresholds (and therefore
 the number of regressions) to perform the test. Default is 10.}
+
+\item{geneset}{a vector, a gmt file or a BiocSet object. 
+If the parameter is \itemize{
+ \item a vector : corresponds to the gene index in the matrix \code{M}
+ \item a gmt file : the genes names of each genes set in the file must be the same as those of the columns of the matrix M
+ \item a BiocSet object : the genes names of each genes set in the object must be the same as those of the columns of the matrix M
+}}
 }
 \value{
 A list with the following elements:\itemize{

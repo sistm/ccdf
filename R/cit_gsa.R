@@ -15,7 +15,7 @@
 #'test upon. Multiple covariates (\code{q>1}) are only supported by the 
 #'asymptotic test. 
 #'
-#'#'@param geneset a vector, a gmt file or a BiocSet object. 
+#' @param geneset a vector, a gmt file or a BiocSet object. 
 #'If the parameter is \itemize{
 #'  \item a vector : corresponds to the gene index in the matrix \code{M}
 #'  \item a gmt file : the genes names of each genes set in the file must be the same as those of the columns of the matrix M
