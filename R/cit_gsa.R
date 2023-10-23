@@ -327,20 +327,23 @@ cit_gsa <- function(M,
     pval <- NA
     
     
+    n_Y_all <- nrow(M)
+    H <- n_Y_all*(solve(crossprod(modelmat)) %*% t(modelmat))[indexes_X, , drop=FALSE] 
+    # length of Y, same for each genes because X and Y are the same 
+    
     for (k in 1:length(geneset)){ # each list of gene set
       
       # Initialisation for each gene in the gene set
       test_stat_gs <- NA
       prop_gs <- list()
       indi_pi_gs <- list()
-      
+
       for (i in 1:length(geneset[[k]])){ # each gene in the gene set 
         
+        if (geneset[[k]][i] == M_colnames[i]){ # check if the name in the gs is not in the tab M
+          
         Y <- M[,geneset[[k]][i]]
-        
-        n_Y_all <- length(Y)
-        H <- n_Y_all*(solve(crossprod(modelmat)) %*% t(modelmat))[indexes_X, , drop=FALSE] 
-        # length of Y, same for each genes because X and Y are the same 
+
         
         # 1) Test statistic computation ----
         if (space_y){
@@ -368,20 +371,27 @@ cit_gsa <- function(M,
         prop <- colMeans(indi_pi)
         prop_gs[[i]] <- prop # prop for each genes in the gene set 
         
-      } 
+        } else {
+          test_stat_gs[i] = 0
+          indi_pi_gs[[i]] = 0
+          prop_gs[[i]] = 0
+        }
+    } 
       test_stat_list[[k]] <- test_stat_gs
       
       indi_pi_gs_tab <- do.call(cbind, indi_pi_gs)
       prop_gs_vec <- unlist(prop_gs)
       
       
+      
       # 3) Sigma matrix creation ----
       Sigma2 <- matrix(NA,length(prop_gs_vec)*nrow(H),length(prop_gs_vec)*nrow(H)) 
       new_prop <- matrix(NA,length(prop_gs_vec),length(prop_gs_vec))
       
+      
       if (nrow(H)>1){ # > 1 condition X
         
-        for (i in 1:nrow(new_prop)){  # new prop computation/new pi computation = the one of the gene set, here it's a matrix 
+        for (i in 1:nrow(new_prop)){  # new prop/new pi computation = the one of the gene set, here it's a matrix 
           for(j in 1:ncol(new_prop)){
             
             new_prop[i,j] <- mean((indi_pi_gs_tab[,i]-prop_gs_vec[i]) * (indi_pi_gs_tab[,j]-prop_gs_vec[j])) + prop_gs_vec[i] * prop_gs_vec[j] 
@@ -403,6 +413,7 @@ cit_gsa <- function(M,
           }
         }
       }
+      
       Sigma2_list[[k]] <- Sigma2
       
       decomp_list[[k]] <- eigen(Sigma2_list[[k]], symmetric=TRUE, only.values=TRUE)
@@ -410,12 +421,12 @@ cit_gsa <- function(M,
       pval[k] <- survey::pchisqsum(sum(test_stat_list[[k]]), lower.tail = FALSE, df = rep(1, ncol(Sigma2_list[[k]])),a =decomp_list[[k]]$values , method = "saddlepoint") 
       
     }
-    
+  
     df <- data.frame(raw_pval=pval,
                      adj_pval =p.adjust(pval, method = "BH"),
                      test_statistic = unlist(lapply(test_stat_list,sum)))
     
-    
+   
     
     } 
 
