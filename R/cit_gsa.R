@@ -79,18 +79,18 @@
 #' @examples
 #' #TO DO 
 cit_gsa <- function(M,
-                      X,
-                      Z = NULL,
-                      test = c("asymptotic","permutation"),
-                      n_perm = 100,
-                      n_perm_adaptive = c(n_perm, n_perm, n_perm*3, n_perm*5),
-                      thresholds = c(0.1,0.05,0.01),
-                      parallel = interactive(),
-                      n_cpus = detectCores() - 1,
-                      adaptive = FALSE,
-                      space_y = TRUE,
-                      number_y = 10,
-                      geneset){
+                    X,
+                    Z = NULL,
+                    test = c("asymptotic","permutation"),
+                    n_perm = 100,
+                    n_perm_adaptive = c(n_perm, n_perm, n_perm*3, n_perm*5),
+                    thresholds = c(0.1,0.05,0.01),
+                    parallel = interactive(),
+                    n_cpus = detectCores() - 1,
+                    adaptive = FALSE,
+                    space_y = TRUE,
+                    number_y = 10,
+                    geneset){
   
   # checks
   if(is.matrix(M)){
@@ -103,10 +103,10 @@ cit_gsa <- function(M,
   stopifnot(is.logical(parallel))
   stopifnot(is.logical(adaptive))
   stopifnot(is.numeric(n_perm))
-
+  
   
   M_colnames <- colnames(M)
-
+  
   
   if (sum(is.na(M)) > 1) {
     warning("'M' contains", sum(is.na(M)), "NA values. ",
@@ -279,7 +279,7 @@ cit_gsa <- function(M,
   } else if (test=="asymptotic"){
     ## asymptotic ----
     n_perm <- NA
-
+    
     # Data formatting in list format +  check column names
     if (inherits(geneset,"GSA.genesets")) { 
       geneset <- geneset$genesets
@@ -302,8 +302,8 @@ cit_gsa <- function(M,
         stop("No column names in M match geneset identifiers")
       } 
       
-      } else if(is.vector(geneset)){
-        geneset <- list(geneset)
+    } else if(is.vector(geneset)){
+      geneset <- list(geneset)
     }
     
     
@@ -337,46 +337,46 @@ cit_gsa <- function(M,
       test_stat_gs <- NA
       prop_gs <- list()
       indi_pi_gs <- list()
-
+      
       for (i in 1:length(geneset[[k]])){ # each gene in the gene set 
         
-        if (geneset[[k]][i] == M_colnames[i]){ # check if the name in the gs is not in the tab M
+        if (any(geneset[[k]][i] == M_colnames)){ # check if the name in the gs is not in the tab M TESTER %in%
           
-        Y <- M[,geneset[[k]][i]]
-
-        
-        # 1) Test statistic computation ----
-        if (space_y){
-          y <- seq(from = ifelse(length(which(Y==0))==0, min(Y), min(Y[-which(Y==0)])),
-                   to = max(Y[-which.max(as.matrix(Y))]), length.out = number_y)
-        } else{
-          y <- sort(unique(Y))
-        }
-        p <- length(y)
-        
-        index_jumps <- sapply(y[-p], function(i){sum(Y <= i)}) 
-        beta <- c(apply(X = H[, order(Y), drop=FALSE], MARGIN = 1, FUN = cumsum)[index_jumps, ]) / n_Y_all # same number than thresholds
-        test_stat <- sum(beta^2) * n_Y_all
-        
-        test_stat_gs[i] <- test_stat # test statistic for each genes in the gene set 
-        
-        
-        # 2) Pi computation ----
-        indi_pi <- matrix(NA, n_Y_all, (p-1)) 
-        for (j in 1:(p-1)){ 
-          indi_Y <- 1*(Y<=y[j])
-          indi_pi[,j] <- indi_Y
-        }
-        indi_pi_gs[[i]] <- indi_pi
-        prop <- colMeans(indi_pi)
-        prop_gs[[i]] <- prop # prop for each genes in the gene set 
-        
+          Y <- M[,geneset[[k]][i]]
+          
+          
+          # 1) Test statistic computation ----
+          if (space_y){
+            y <- seq(from = ifelse(length(which(Y==0))==0, min(Y), min(Y[-which(Y==0)])),
+                     to = max(Y[-which.max(as.matrix(Y))]), length.out = number_y)
+          } else{
+            y <- sort(unique(Y))
+          }
+          p <- length(y)
+          
+          index_jumps <- sapply(y[-p], function(i){sum(Y <= i)}) 
+          beta <- c(apply(X = H[, order(Y), drop=FALSE], MARGIN = 1, FUN = cumsum)[index_jumps, ]) / n_Y_all # same number than thresholds
+          test_stat <- sum(beta^2) * n_Y_all
+          
+          test_stat_gs[i] <- test_stat # test statistic for each genes in the gene set 
+          
+          
+          # 2) Pi computation ----
+          indi_pi <- matrix(NA, n_Y_all, (p-1)) 
+          for (j in 1:(p-1)){ 
+            indi_Y <- 1*(Y<=y[j])
+            indi_pi[,j] <- indi_Y
+          }
+          indi_pi_gs[[i]] <- indi_pi
+          prop <- colMeans(indi_pi)
+          prop_gs[[i]] <- prop # prop for each genes in the gene set 
+          
         } else {
           test_stat_gs[i] = 0
           indi_pi_gs[[i]] = 0
           prop_gs[[i]] = 0
         }
-    } 
+      } 
       test_stat_list[[k]] <- test_stat_gs
       
       indi_pi_gs_tab <- do.call(cbind, indi_pi_gs)
@@ -421,16 +421,16 @@ cit_gsa <- function(M,
       pval[k] <- survey::pchisqsum(sum(test_stat_list[[k]]), lower.tail = FALSE, df = rep(1, ncol(Sigma2_list[[k]])),a =decomp_list[[k]]$values , method = "saddlepoint") 
       
     }
-  
+   browser()
     df <- data.frame(raw_pval=pval,
                      adj_pval =p.adjust(pval, method = "BH"),
                      test_statistic = unlist(lapply(test_stat_list,sum)))
     
-   
     
-    } 
-
     
+  } 
+  
+  
   #rownames(df) <- M_colnames
   
   output <- list(which_test = test,
@@ -439,7 +439,7 @@ cit_gsa <- function(M,
   
   class(output) <- "cit_gsa"
   return(output)
-
+  
   
   
 }
