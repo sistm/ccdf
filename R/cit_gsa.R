@@ -440,7 +440,7 @@ cit_gsa <- function(M,
 
   #rownames(df) <- M_colnames
   
-  browser() 
+
     
   output <- list(which_test = test,
                  n_perm = n_perm, 
