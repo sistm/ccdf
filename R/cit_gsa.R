@@ -18,6 +18,7 @@
 #' @param geneset a vector, a gmt file or a BiocSet object. 
 #'If the parameter is \itemize{
 #'  \item a vector : corresponds to the gene name of the gene set, must be the same as those of the columns of the matrix \code{M}
+#'  \item a list : each elements of the list are a gene set with the names of the genes, must be the same as those of the columns of the matrix \code{M}
 #'  \item a gmt file : the genes names of each genes set in the file, must be the same as those of the columns of the matrix \code{M}
 #'  \item a BiocSet object : the genes names of each genes set in the object, must be the same as those of the columns of the matrix \code{M}
 #'}
@@ -103,7 +104,7 @@ cit_gsa <- function(M,
   stopifnot(is.logical(parallel))
   stopifnot(is.logical(adaptive))
   stopifnot(is.numeric(n_perm))
-  stopifnot(inherits(geneset,"GSA.genesets") | inherits(geneset,"BiocSet") | is.character(geneset))
+  stopifnot(inherits(geneset,"GSA.genesets") | inherits(geneset,"BiocSet") | is.character(geneset) | is.list(geneset))
   
   
   M_colnames <- colnames(M)
