@@ -282,6 +282,8 @@ cit_gsa <- function(M,
     ## asymptotic ----
     n_perm <- NA
     
+  
+    
     # Data formatting in list format +  check column names
     if (inherits(geneset,"GSA.genesets")) { 
       geneset <- geneset$genesets
@@ -292,10 +294,10 @@ cit_gsa <- function(M,
                           geneset[geneset$set == x,]$element
                         }
       )
-    } else if(is.vector(geneset)){
+    } else if(is.vector(geneset) & !is.list(geneset)){
       geneset <- list(geneset)
-    }
-    
+    } 
+   
     
     # CHECK 1 : stop if no M column ids match all genes ids in the gene sets
     if (all(M_colnames != unique(unlist(geneset)))){ # if true, displays message
