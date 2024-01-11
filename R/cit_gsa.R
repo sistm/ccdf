@@ -94,11 +94,8 @@ cit_gsa <- function(M,
                     geneset){
   
   # checks
-  if(is.matrix(M)){
-    M <- as.data.frame(M)
-  }
   
-  stopifnot(is.data.frame(M))
+  stopifnot(is.data.frame(M) | is.matrix(M))
   stopifnot(is.data.frame(X))
   stopifnot(is.data.frame(Z) | is.null(Z))
   stopifnot(is.logical(parallel))
@@ -282,7 +279,7 @@ cit_gsa <- function(M,
     ## asymptotic ----
     n_perm <- NA
     
-  
+    
     
     # Data formatting in list format +  check column names
     if (inherits(geneset,"GSA.genesets")) { 
@@ -296,13 +293,7 @@ cit_gsa <- function(M,
       )
     } else if(is.vector(geneset) & !is.list(geneset)){
       geneset <- list(geneset)
-    } 
-   
-    
-    # CHECK 1 : stop if no M column ids match all genes ids in the gene sets
-    if (all(M_colnames != unique(unlist(geneset)))){ # if true, displays message
-      stop("No column names in M match geneset identifiers")
-    } 
+    }
     
     
     
@@ -329,122 +320,107 @@ cit_gsa <- function(M,
     H <- n_Y_all*(solve(crossprod(modelmat)) %*% t(modelmat))[indexes_X, , drop=FALSE] 
     # length of Y, same for each genes because X and Y are the same 
     
+    
     for (k in 1:length(geneset)){ # each list of gene set
       
       
       # Initialisation for each gene in the gene set
-      test_stat_gs <- NA
+      test_stat_gs <- NULL
       prop_gs <- list()
       indi_pi_gs <- list()
       
-       
-      if (any(geneset[[k]] %in% M_colnames) ){  # CHECK 2 : code below if all  the genes in the gene set k are in M, else pval + stat de test = NA
+      # CHECK 1 : stop if no M column ids match all genes ids in the gene sets
+      measured_genes <- intersect(M_colnames, geneset[[k]]) # if true, displays message
+      
+      if(length(measured_genes)<1){
+        warning("0 genes from geneset ", k, " observed in expression data")
+        pval[k] <- NA
+        test_stat_list[[k]] <- NA
+      }else{
         
-        
-        for (i in 1:length(geneset[[k]])){ # each gene in the gene set k
-          
-          
-          if (geneset[[k]][i] %in% M_colnames){ # CHECK 3 : if the name in the gs is in the tab M
-            
-            
-            Y <- M[,geneset[[k]][i]]
-            
-            
-            # 1) Test statistic computation ----
-            if (space_y){
-              y <- seq(from = ifelse(length(which(Y==0))==0, min(Y), min(Y[-which(Y==0)])),
-                       to = max(Y[-which.max(as.matrix(Y))]), length.out = number_y)
-            } else{
-              y <- sort(unique(Y))
-            }
-            p <- length(y)
-            
-            index_jumps <- sapply(y[-p], function(i){sum(Y <= i)}) 
-            beta <- c(apply(X = H[, order(Y), drop=FALSE], MARGIN = 1, FUN = cumsum)[index_jumps, ]) / n_Y_all # same number than thresholds
-            test_stat <- sum(beta^2) * n_Y_all
-            
-            test_stat_gs[i] <- test_stat # test statistic for each genes in the gene set 
-            
-            
-            # 2) Pi computation ----
-            indi_pi <- matrix(NA, n_Y_all, (p-1)) 
-            
-            for (j in 1:(p-1)){ 
-              indi_Y <- 1 * (Y <= y[j])
-              indi_pi[,j] <- indi_Y
-            }
-            
-            indi_pi_gs[[i]] <- indi_pi
-            prop <- colMeans(indi_pi)
-            prop_gs[[i]] <- prop # prop for each genes in the gene set 
-            
-            
-          } else {
-            warning(" Some genes from geneset ", k, " are not observed in expression data")
-            test_stat_gs[i] <- 0
-            indi_pi_gs[[i]] <- 0
-            prop_gs[[i]] <- 0
-          }
-        } 
-        
-        test_stat_list[[k]] <- test_stat_gs
-        indi_pi_gs_tab <- do.call(cbind, indi_pi_gs)
-        prop_gs_vec <- unlist(prop_gs)
-        
-        # 3) Sigma matrix creation ----
-        Sigma2 <- matrix(NA,length(prop_gs_vec)*nrow(H),length(prop_gs_vec)*nrow(H)) 
-        new_prop <- matrix(NA,length(prop_gs_vec),length(prop_gs_vec))
-        
-        
-        
-        if (nrow(H)>1){ # > 1 condition X
-          
-          for (i in 1:nrow(new_prop)){  # new prop/new pi computation = the one of the gene set, here it's a matrix 
-            for(j in 1:ncol(new_prop)){
-              
-              new_prop[i,j] <- mean((indi_pi_gs_tab[,i]-prop_gs_vec[i]) * (indi_pi_gs_tab[,j]-prop_gs_vec[j])) + prop_gs_vec[i] * prop_gs_vec[j] 
-              
-            }
-          }
-          
-          Sigma2 <- 1/n * tcrossprod(H) %x%  (new_prop - prop_gs_vec %x%  t(prop_gs_vec))
-          
-          
-        } else { # 1 condition  
-          
-          for (i in 1:nrow(Sigma2)) {  
-            for (j in 1:ncol(Sigma2)) {
-              
-              new_prop <- mean((indi_pi_gs_tab[,i]-prop_gs_vec[i]) * (indi_pi_gs_tab[,j]-prop_gs_vec[j])) + prop_gs_vec[i] * prop_gs_vec[j] 
-              
-              Sigma2[i, j] <- 1/n * tcrossprod(H) * (new_prop - prop_gs_vec[i] * prop_gs_vec[j])
-            }
-          }
+        if(length(measured_genes) < length( geneset[[k]])){
+          warning(" Some genes from geneset ", k, " are not observed in expression data")
         }
+        # code below if all  the genes in the gene set k are in M, else pval + stat de test = NA
         
-        Sigma2_list[[k]] <- Sigma2
         
-        decomp_list[[k]] <- eigen(Sigma2_list[[k]], symmetric=TRUE, only.values=TRUE)
-        
-        pval[k] <- survey::pchisqsum(sum(test_stat_list[[k]]), lower.tail = FALSE, df = rep(1, ncol(Sigma2_list[[k]])),a =decomp_list[[k]]$values , method = "saddlepoint") 
-        } else {
-          warning("0 genes from geneset ", k, " observed in expression data")
-          pval[k] <- NA
-          test_stat_list[[k]] <- NA
+        for (i in measured_genes){ # each gene in the gene set k
+          
+          Y <- M[, i]
+          
+          
+          # 1) Test statistic computation ----
+          if (space_y){
+            y <- seq(from = ifelse(length(which(Y==0))==0, min(Y), min(Y[-which(Y==0)])),
+                     to = max(Y[-which.max(as.matrix(Y))]), length.out = number_y)
+          } else{
+            y <- sort(unique(Y))
+          }
+          p <- length(y)
+          
+          index_jumps <- sapply(y[-p], function(i){sum(Y <= i)}) 
+          beta <- c(apply(X = H[, order(Y), drop=FALSE], MARGIN = 1, FUN = cumsum)[index_jumps, ]) / n_Y_all # same number than thresholds
+          test_stat <- sum(beta^2) * n_Y_all
+          
+          test_stat_gs[i] <- test_stat # test statistic for each genes in the gene set 
+          
+          
+          # 2) Pi computation ----
+          indi_pi <- matrix(NA, n_Y_all, (p-1)) 
+          
+          for (j in 1:(p-1)){ 
+            indi_Y <- 1 * (Y <= y[j])
+            indi_pi[,j] <- indi_Y
+          }
+          
+          indi_pi_gs[[i]] <- indi_pi
+          prop <- colMeans(indi_pi)
+          prop_gs[[i]] <- prop # prop for each genes in the gene set 
+          
+          
         }
       } 
       
+      test_stat_list[[k]] <- test_stat_gs
+      indi_pi_gs_tab <- do.call(cbind, indi_pi_gs)
+      prop_gs_vec <- unlist(prop_gs)
+      n_g_t <- length(prop_gs_vec)
+      
+      # 3) Sigma matrix creation ----
+      Sigma2 <- matrix(NA, n_g_t*nrow(H), n_g_t*nrow(H)) 
+      new_prop <- matrix(NA, n_g_t, n_g_t)
+      
+      
+      
+      n_gs_vec <- nrow(indi_pi_gs_tab)
+      temp <- indi_pi_gs_tab - matrix(prop_gs_vec, nrow=n_gs_vec, ncol=n_g_t, byrow=TRUE)
+      
+      for (i in 1:nrow(new_prop)){  # new prop/new pi computation = the one of the gene set, here it's a matrix 
+        new_prop[i, ] <- (temp[, i]%*%temp)/n_gs_vec + prop_gs_vec[i]*prop_gs_vec
+      }
+      
+      Sigma2 <- 1/n * tcrossprod(H) %x%  (new_prop - prop_gs_vec %x%  t(prop_gs_vec))
+      
+      
+      
+      Sigma2_list[[k]] <- Sigma2
+      
+      decomp_list[[k]] <- eigen(Sigma2_list[[k]], symmetric=TRUE, only.values=TRUE)
+      
+      pval[k] <- survey::pchisqsum(sum(test_stat_list[[k]]), lower.tail = FALSE, df = rep(1, ncol(Sigma2_list[[k]])),a =decomp_list[[k]]$values , method = "saddlepoint") 
     }
     
-    
-    df <- data.frame(raw_pval = pval,
-                     adj_pval = p.adjust(pval, method="BH"),
-                     test_statistic = unlist(lapply(test_stat_list, sum)))
-
+  }
+  
+  
+  df <- data.frame(raw_pval = pval,
+                   adj_pval = p.adjust(pval, method="BH"),
+                   test_statistic = unlist(lapply(test_stat_list, sum)))
+  
   #rownames(df) <- M_colnames
   
-
-    
+  
+  
   output <- list(which_test = test,
                  n_perm = n_perm, 
                  pvals = df)

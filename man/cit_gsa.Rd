@@ -75,9 +75,10 @@ the number of regressions) to perform the test. Default is 10.}
 
 \item{geneset}{a vector, a gmt file or a BiocSet object. 
 If the parameter is \itemize{
- \item a vector : corresponds to the gene index in the matrix \code{M}
- \item a gmt file : the genes names of each genes set in the file must be the same as those of the columns of the matrix M
- \item a BiocSet object : the genes names of each genes set in the object must be the same as those of the columns of the matrix M
+ \item a vector : corresponds to the gene name of the gene set, must be the same as those of the columns of the matrix \code{M}
+ \item a list : each elements of the list are a gene set with the names of the genes, must be the same as those of the columns of the matrix \code{M}
+ \item a gmt file : the genes names of each genes set in the file, must be the same as those of the columns of the matrix \code{M}
+ \item a BiocSet object : the genes names of each genes set in the object, must be the same as those of the columns of the matrix \code{M}
 }}
 }
 \value{
