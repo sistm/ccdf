@@ -391,7 +391,6 @@ cit_gsa <- function(M,
       new_prop <- matrix(NA, n_g_t, n_g_t)
       
       
-      
       n_gs_vec <- nrow(indi_pi_gs_tab)
       temp <- indi_pi_gs_tab - matrix(prop_gs_vec, nrow=n_gs_vec, ncol=n_g_t, byrow=TRUE)
       
