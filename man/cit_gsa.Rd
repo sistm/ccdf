@@ -8,6 +8,7 @@ cit_gsa(
   M,
   X,
   Z = NULL,
+  geneset,
   test = c("asymptotic", "permutation"),
   n_perm = 100,
   n_perm_adaptive = c(n_perm, n_perm, n_perm * 3, n_perm * 5),
@@ -16,8 +17,7 @@ cit_gsa(
   n_cpus = detectCores() - 1,
   adaptive = FALSE,
   space_y = TRUE,
-  number_y = 10,
-  geneset
+  number_y = 10
 )
 }
 \arguments{
@@ -34,6 +34,14 @@ are only supported by the asymptotic test.}
 containing the covariate(s) to condition the independence 
 test upon. Multiple covariates (\code{q>1}) are only supported by the 
 asymptotic test.}
+
+\item{geneset}{a vector, a list, a gmt file format or a BiocSet object. 
+If the parameter is \itemize{
+ \item a vector : corresponds to the gene name of the gene set, must be the same as those of the columns of the matrix \code{M}
+ \item a list : each elements of the list are a gene set with the names of the genes, must be the same as those of the columns of the matrix \code{M}
+ \item a gmt file format : the genes names of each genes set in the file, must be the same as those of the columns of the matrix \code{M}
+ \item a BiocSet object : the genes names of each genes set in the object, must be the same as those of the columns of the matrix \code{M}
+}}
 
 \item{test}{a character string indicating whether the \code{'asymptotic'} or 
 the \code{'permutation'} test is computed.
@@ -72,14 +80,6 @@ observed expression value is used as a distinct threshold. Default is \code{TRUE
 
 \item{number_y}{an integer value indicating the number of y thresholds (and therefore
 the number of regressions) to perform the test. Default is 10.}
-
-\item{geneset}{a vector, a gmt file or a BiocSet object. 
-If the parameter is \itemize{
- \item a vector : corresponds to the gene name of the gene set, must be the same as those of the columns of the matrix \code{M}
- \item a list : each elements of the list are a gene set with the names of the genes, must be the same as those of the columns of the matrix \code{M}
- \item a gmt file : the genes names of each genes set in the file, must be the same as those of the columns of the matrix \code{M}
- \item a BiocSet object : the genes names of each genes set in the object, must be the same as those of the columns of the matrix \code{M}
-}}
 }
 \value{
 A list with the following elements:\itemize{
@@ -99,5 +99,21 @@ A list with the following elements:\itemize{
 Conditional independance test for gene set analysis
 }
 \examples{
-#TO DO 
+set.seed(123)
+n <- 500
+r <- 200
+Z1 <- rnorm(n)
+Z2 <- rnorm(n)#rbinom(n, size=1, prob=0.5) + rnorm(n, sd=0.05)
+X1 <- Z2 + rnorm(n, sd=0.2)
+X2 <- rnorm(n)
+cor(X1, Z2)
+Y <- replicate(r, Z2) + rnorm(n*r, 0, 0.5)
+range(cor(Y, Z2))
+range(cor(Y, X2))
+res_asymp_unadj <- cit_gsa(M = data.frame(Y=Y), 
+                X = data.frame(X2=X1), 
+                geneset = paste0("Y.", 1:50),
+                test="asymptotic", parallel=FALSE)
+res_asymp_unadj$pvals
+                
 }
