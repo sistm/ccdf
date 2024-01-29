@@ -320,6 +320,7 @@ cit_gsa <- function(M,
     H <- n_Y_all*(solve(crossprod(modelmat)) %*% t(modelmat))[indexes_X, , drop=FALSE] 
     # length of Y, same for each genes because X and Y are the same 
     
+   
     
     for (k in 1:length(geneset)){ # each list of gene set
       
@@ -332,16 +333,16 @@ cit_gsa <- function(M,
       # CHECK 1 : stop if no M column ids match all genes ids in the gene sets
       measured_genes <- intersect(M_colnames, geneset[[k]]) # if true, displays message
       
-      if(length(measured_genes)<1){
+      if(length(measured_genes)<1){ # check 1-2 : none genes of the 1 or all the geneset are in M
         warning("0 genes from geneset ", k, " observed in expression data")
         pval[k] <- NA
         test_stat_list[[k]] <- NA
-      }else{
+      }else{ 
         
-        if(length(measured_genes) < length( geneset[[k]])){
+        if(length(measured_genes) < length( geneset[[k]])){ # check 3
           warning(" Some genes from geneset ", k, " are not observed in expression data")
         }
-        # code below if all  the genes in the gene set k are in M, else pval + stat de test = NA
+        
         
         
         for (i in measured_genes){ # each gene in the gene set k
@@ -379,34 +380,37 @@ cit_gsa <- function(M,
           
           
         }
+        
+        test_stat_list[[k]] <- test_stat_gs 
+        
+        indi_pi_gs_tab <- do.call(cbind, indi_pi_gs)
+        prop_gs_vec <- unlist(prop_gs)
+        n_g_t <- length(prop_gs_vec)
+        
+        # 3) Sigma matrix creation ----
+        Sigma2 <- matrix(NA, n_g_t*nrow(H), n_g_t*nrow(H)) 
+        new_prop <- matrix(NA, n_g_t, n_g_t)
+        
+        
+        n_gs_vec <- nrow(indi_pi_gs_tab)
+        temp <- indi_pi_gs_tab - matrix(prop_gs_vec, nrow=n_gs_vec, ncol=n_g_t, byrow=TRUE)
+        
+        for (i in 1:nrow(new_prop)){  # new prop/new pi computation = the one of the gene set, here it's a matrix 
+          new_prop[i, ] <- (temp[, i]%*%temp)/n_gs_vec + prop_gs_vec[i]*prop_gs_vec
+        }
+        
+        Sigma2 <- 1/n * tcrossprod(H) %x%  (new_prop - prop_gs_vec %x%  t(prop_gs_vec))
+        
+        
+        
+        Sigma2_list[[k]] <- Sigma2
+        
+        decomp_list[[k]] <- eigen(Sigma2_list[[k]], symmetric=TRUE, only.values=TRUE)
+        
+        pval[k] <- survey::pchisqsum(sum(test_stat_list[[k]]), lower.tail = FALSE, df = rep(1, ncol(Sigma2_list[[k]])),a =decomp_list[[k]]$values , method = "saddlepoint") 
+        
       } 
-      
-      test_stat_list[[k]] <- test_stat_gs
-      indi_pi_gs_tab <- do.call(cbind, indi_pi_gs)
-      prop_gs_vec <- unlist(prop_gs)
-      n_g_t <- length(prop_gs_vec)
-      
-      # 3) Sigma matrix creation ----
-      Sigma2 <- matrix(NA, n_g_t*nrow(H), n_g_t*nrow(H)) 
-      new_prop <- matrix(NA, n_g_t, n_g_t)
-      
-      
-      n_gs_vec <- nrow(indi_pi_gs_tab)
-      temp <- indi_pi_gs_tab - matrix(prop_gs_vec, nrow=n_gs_vec, ncol=n_g_t, byrow=TRUE)
-      
-      for (i in 1:nrow(new_prop)){  # new prop/new pi computation = the one of the gene set, here it's a matrix 
-        new_prop[i, ] <- (temp[, i]%*%temp)/n_gs_vec + prop_gs_vec[i]*prop_gs_vec
-      }
-      
-      Sigma2 <- 1/n * tcrossprod(H) %x%  (new_prop - prop_gs_vec %x%  t(prop_gs_vec))
-      
-      
-      
-      Sigma2_list[[k]] <- Sigma2
-      
-      decomp_list[[k]] <- eigen(Sigma2_list[[k]], symmetric=TRUE, only.values=TRUE)
-      
-      pval[k] <- survey::pchisqsum(sum(test_stat_list[[k]]), lower.tail = FALSE, df = rep(1, ncol(Sigma2_list[[k]])),a =decomp_list[[k]]$values , method = "saddlepoint") 
+    
     }
     
   }
