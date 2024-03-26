@@ -78,10 +78,26 @@
 #' @export
 #'
 #' @examples
-#' #TO DO 
+#' set.seed(123)
+#' n <- 500
+#' r <- 200
+#' Z1 <- rnorm(n)
+#' Z2 <- rnorm(n)#rbinom(n, size=1, prob=0.5) + rnorm(n, sd=0.05)
+#' X1 <- Z2 + rnorm(n, sd=0.2)
+#' X2 <- rnorm(n)
+#' cor(X1, Z2)
+#' Y <- replicate(r, Z2) + rnorm(n*r, 0, 0.5)
+#' range(cor(Y, Z2))
+#' range(cor(Y, X2))
+#' res_asymp_unadj <- cit_gsa(M = data.frame(Y=Y), 
+#'                            X = data.frame(X2=X1), 
+#'                            geneset = paste0("Y.", 1:50),
+#'                            test="asymptotic", parallel=FALSE)
+#'res_asymp_unadj$pvals   
 cit_gsa <- function(M,
                     X,
                     Z = NULL,
+                    geneset,
                     test = c("asymptotic","permutation"),
                     n_perm = 100,
                     n_perm_adaptive = c(n_perm, n_perm, n_perm*3, n_perm*5),
@@ -90,8 +106,7 @@ cit_gsa <- function(M,
                     n_cpus = detectCores() - 1,
                     adaptive = FALSE,
                     space_y = TRUE,
-                    number_y = 10,
-                    geneset){
+                    number_y = 10){
   
   # checks
   
@@ -320,34 +335,43 @@ cit_gsa <- function(M,
     H <- n_Y_all*(solve(crossprod(modelmat)) %*% t(modelmat))[indexes_X, , drop=FALSE] 
     # length of Y, same for each genes because X and Y are the same 
     
-   
+    if(length(geneset)<3){
+      pboptions(type="none")
+    }
     
-    for (k in 1:length(geneset)){ # each list of gene set
-      
-      
-      # Initialisation for each gene in the gene set
-      test_stat_gs <- NULL
-      prop_gs <- list()
-      indi_pi_gs <- list()
+    n_cpus <- min(length(geneset), n_cpus)
+    
+    res <- pbapply::pblapply(1:length(geneset), function(k){ # each list of gene set
       
       # CHECK 1 : stop if no M column ids match all genes ids in the gene sets
       measured_genes <- intersect(M_colnames, geneset[[k]]) # if true, displays message
       
+      
+      # Initialisation for each gene in the gene set
+      #test_stat_gs <- NULL
+      prop_gs <- list()
+      indi_pi_gs <- list()
+      
+
+      
       if(length(measured_genes)<1){ # check 1-2 : none genes of the 1 or all the geneset are in M
         warning("0 genes from geneset ", k, " observed in expression data")
-        pval[k] <- NA
-        test_stat_list[[k]] <- NA
+        pval <- NA
+        test_stat_list <- NA
       }else{ 
+        
+        test_stat_gs <- numeric(length(measured_genes))
         
         if(length(measured_genes) < length( geneset[[k]])){ # check 3
           warning(" Some genes from geneset ", k, " are not observed in expression data")
         }
         
         
+        # code below if all  the genes in the gene set k are in M, else pval + stat de test = NA
         
-        for (i in measured_genes){ # each gene in the gene set k
+        for (i in 1:length(measured_genes)){ # each gene in the gene set k
           
-          Y <- M[, i]
+          Y <- M[, measured_genes[i]]
           
           
           # 1) Test statistic computation ----
@@ -380,8 +404,8 @@ cit_gsa <- function(M,
           
           
         }
+      }
         
-        test_stat_list[[k]] <- test_stat_gs 
         
         indi_pi_gs_tab <- do.call(cbind, indi_pi_gs)
         prop_gs_vec <- unlist(prop_gs)
@@ -401,25 +425,30 @@ cit_gsa <- function(M,
         
         Sigma2 <- 1/n * tcrossprod(H) %x%  (new_prop - prop_gs_vec %x%  t(prop_gs_vec))
         
+        decomp <- eigen(Sigma2, symmetric=TRUE, only.values=TRUE)
         
-        
-        Sigma2_list[[k]] <- Sigma2
-        
-        decomp_list[[k]] <- eigen(Sigma2_list[[k]], symmetric=TRUE, only.values=TRUE)
-        
-        pval[k] <- survey::pchisqsum(sum(test_stat_list[[k]]), lower.tail = FALSE, df = rep(1, ncol(Sigma2_list[[k]])),a =decomp_list[[k]]$values , method = "saddlepoint") 
-        
-      } 
+        pval <- survey::pchisqsum(sum(test_stat_gs), lower.tail = FALSE, 
+                                  df = rep(1, ncol(Sigma2)), 
+                                  a =decomp$values , method = "saddlepoint")
+        return(list("pval" = pval, "test_stat_gs" = test_stat_gs))
+      
+      },
+    cl = n_cpus)
+    pboptions(type="timer")
+
     
-    }
+    pvals <- sapply(res, "[[", "pval")
+    
+    test_stat_list <- lapply(res, "[[", "test_stat_gs")
+  
     
   }
+
   
-  
-  df <- data.frame(raw_pval = pval,
-                   adj_pval = p.adjust(pval, method="BH"),
-                   test_statistic = unlist(lapply(test_stat_list, sum)))
-  
+  df <- data.frame(raw_pval = pvals,
+                   adj_pval = p.adjust(pvals, method="BH"),
+                   test_statistic = sapply(test_stat_list, sum))
+                                                     
   #rownames(df) <- M_colnames
   
   
