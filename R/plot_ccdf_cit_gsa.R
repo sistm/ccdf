@@ -10,9 +10,8 @@
 #' @export
 #'
 #' @examples
-#' TO DO 
-#' 
-#' plot_ccdf_cit_gsa(ccdf_gs2_X_space, number_y=40)
+
+
 
 
 
@@ -170,7 +169,7 @@ plot_ccdf_cit_gsa <- function(ccdf, number_y=length(ccdf[[1]]$y)){
 }
 
 
-
+#plot_ccdf_cit_gsa(ccdf_gs2_X_space, number_y=40)
 
 
 

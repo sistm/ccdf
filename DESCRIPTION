@@ -26,5 +26,5 @@ Description: Complex hypothesis testing through conditional cumulative distribut
              "Distribution-free complex hypothesis testing for single-cell RNA-seq differential expression analysis", BioRxiv <doi:10.1101/2021.05.21.445165>.
 License: GPL (>= 3)
 Encoding: UTF-8
-RoxygenNote: 7.3.0
+RoxygenNote: 7.3.1
 BugReports: https://github.com/sistm/citcdf/issues
