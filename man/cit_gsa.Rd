@@ -35,6 +35,14 @@ containing the covariate(s) to condition the independence
 test upon. Multiple covariates (\code{q>1}) are only supported by the 
 asymptotic test.}
 
+\item{geneset}{a vector, a list, a gmt file format or a BiocSet object. 
+If the parameter is \itemize{
+ \item a vector : corresponds to the gene name of the gene set, must be the same as those of the columns of the matrix \code{M}
+ \item a list : each elements of the list are a gene set with the names of the genes, must be the same as those of the columns of the matrix \code{M}
+ \item a gmt file format : the genes names of each genes set in the file, must be the same as those of the columns of the matrix \code{M}
+ \item a BiocSet object : the genes names of each genes set in the object, must be the same as those of the columns of the matrix \code{M}
+}}
+
 \item{test}{a character string indicating whether the \code{'asymptotic'} or 
 the \code{'permutation'} test is computed.
 Default is \code{'asymptotic'}.}
@@ -91,5 +99,20 @@ A list with the following elements:\itemize{
 Conditional independance test for gene set analysis
 }
 \examples{
-#TO DO 
+set.seed(123)
+n <- 500
+r <- 200
+Z1 <- rnorm(n)
+Z2 <- rnorm(n)#rbinom(n, size=1, prob=0.5) + rnorm(n, sd=0.05)
+X1 <- Z2 + rnorm(n, sd=0.2)
+X2 <- rnorm(n)
+cor(X1, Z2)
+Y <- replicate(r, Z2) + rnorm(n*r, 0, 0.5)
+range(cor(Y, Z2))
+range(cor(Y, X2))
+res_asymp_unadj <- cit_gsa(M = data.frame(Y=Y), 
+                           X = data.frame(X2=X1), 
+                           geneset = paste0("Y.", 1:50),
+                           test="asymptotic", parallel=FALSE)
+res_asymp_unadj$pvals   
 }
