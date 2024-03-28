@@ -1,7 +1,7 @@
 
 #' Function for plotting the CDF of all the genes within a gene set
 #'
-#' @param ccdf an list that come from the CCDF function of the package. One elements of the list is the ccdf for one gene. 
+#' @param ccdf a list that come from the CCDF function of the package. One elements of the list is the ccdf for one gene. 
 
 #' @param number_y an integer value indicating the number of y thresholds for the summary curves. Default is \code{length(Y)}.
 #'
@@ -29,6 +29,8 @@
 #'names(ccdf) = geneset[[1]]
 #'
 #'plot_ccdf_cit_gsa(ccdf, number_y=20)
+#'
+#'# Ne fonctionne pas parce que X numérique : REPARER 
 
 
 
@@ -49,7 +51,7 @@ plot_ccdf_cit_gsa <- function(ccdf, number_y=length(ccdf[[1]]$y)){
   sev <- unique(data_gene$x)
  
   # Complete data if no values for some y ----
-  data_gene_sep <- split(data_gene, list(data_gene$Gene, data_gene$x)) # separate the table by genes and severity
+  data_gene_sep <- split(data_gene, list(data_gene$Gene, data_gene$x)) # separate the table by genes and x
   
   new_data_gene_sep <- lapply(data_gene_sep, function(df) {
     # max value of current y
@@ -63,7 +65,7 @@ plot_ccdf_cit_gsa <- function(ccdf, number_y=length(ccdf[[1]]$y)){
     n_miss_y <- length(miss_y)
 
     # add the new y in the data + affect the max value of the ccdf to these y
-    # WARNING : ccdf trié pas y !
+    # WARNING : ccdf sorted not y !
     if (n_miss_y != 0){
       df <- data.frame(cbind(rep(max(df$cdf),n_miss_y), 
                              rep(max(df$ccdf),n_miss_y), 
