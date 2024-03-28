@@ -54,8 +54,6 @@ plot_ccdf_cit_gsa <- function(ccdf, number_y=length(ccdf[[1]]$y)){
                              rep(df$x[1],n_miss_y), miss_y, 
                              rep(df$Gene[1],n_miss_y)))
       colnames(df) <- c("cdf","ccdf","x","y","Gene")
-      level <- 
-      label <- 
       df$x <- factor(df$x, levels = rep(1:length(levels(data_gene$x))) , labels = levels(data_gene$x) ) 
     } else{
       df <- 0
@@ -86,14 +84,14 @@ plot_ccdf_cit_gsa <- function(ccdf, number_y=length(ccdf[[1]]$y)){
   
   seuils <- c(0,y_after)
   
-  
+
   # Compute the median ----
   med <- lapply(sev, function(x){
     med <- rep(NA, number_y)
     filtre_x <- final_data$x == x
     filtre_row_i0 <-  final_data$y >= seuils[1] & final_data$y < seuils[1+1]
     indices0 <- which(filtre_x & filtre_row_i0)
-    med[1] <- median(final_data$ccdf[indices0])
+    med[1] <- 0 #median(final_data$ccdf[indices0])
     
     for (i in 2:length(seuils)){
       
@@ -168,7 +166,7 @@ plot_ccdf_cit_gsa <- function(ccdf, number_y=length(ccdf[[1]]$y)){
   
 }
 
-
+#plot_ccdf_cit_gsa(ccdf_gs2_X_space, number_y=20)
 
 
 
