@@ -1,7 +1,7 @@
 
 #' Function for plotting the CDF of all the genes within a gene set
 #'
-#' @param ccdf an R object that come from the CCDF function of the package
+#' @param ccdf an list that come from the CCDF function of the package. One elements of the list is the ccdf for one gene. 
 
 #' @param number_y an integer value indicating the number of y thresholds for the summary curves. Default is \code{length(Y)}.
 #'
@@ -10,9 +10,25 @@
 #' @export
 #'
 #' @examples
-#' #TO DO
-
-
+#'
+#' set.seed(123)
+#' n <- 500
+#' r <- 200
+#' 
+#' Z <- rnorm(n)
+#' X <- Z + rnorm(n, sd=0.2)
+#' M <- data.frame(replicate(r, Z) + rnorm(n*r, 0, 0.5))
+#' 
+#' g <- colnames(M)
+#' geneset <- list(c(g[1],g[2],g[3]))
+#' 
+#' ccdf <- lapply(geneset[[1]], function(x){
+#'   Y <- M[,x]
+#'   ccdf(Y, data.frame(X), Z=NULL, method="OLS",space_y = T, number_y = 10) 
+#' })
+#'names(ccdf) = geneset[[1]]
+#'
+#'plot_ccdf_cit_gsa(ccdf, number_y=20)
 
 
 
@@ -78,9 +94,6 @@ plot_ccdf_cit_gsa <- function(ccdf, number_y=length(ccdf[[1]]$y)){
   # y value for each thresholds  
   y_after <- seq(from = ifelse(length(which(Y_after==0))==0, min(Y_after), min(Y_after[-which(Y_after==0)])), 
                  to = max(Y_after[-which.max(as.matrix(Y_after))]), length.out = number_y) 
-  #p_after <- length(y_after)
-  # index thresholds 
-  #index_jumps_after <- sapply(y_after[-p_after], function(i){sum(Y_after <= i)})  
   
   seuils <- c(0,y_after)
   
@@ -159,14 +172,13 @@ plot_ccdf_cit_gsa <- function(ccdf, number_y=length(ccdf[[1]]$y)){
   # Plot -----
   ggplot(data = comb_data, aes(x = y, color=x, y = ccdf,linetype = Legend, size=Legend)) +
     geom_line(aes(group = interaction(Gene,x))) + 
-    scale_size_manual(values = c(0.8,0.2)) + # change taille lignes selon variable dans aes(size) 
-    #scale_color_manual(values = c("ITU" = "brown3", "NITU" = "darkgoldenrod1", "Mild"="chartreuse3")) + 
+    scale_size_manual(values = c(0.8,0.2)) + # modify row size according to the variable in aes(size) 
     labs(x = "Gene expression") +
     theme_minimal() 
   
 }
 
-#plot_ccdf_cit_gsa(ccdf_gs2_X_space, number_y=20)
+
 
 
 
