@@ -1,40 +1,21 @@
 
 #' Function for plotting the CDF of all the genes within a gene set
 #'
-#' @param ccdf a list that come from the CCDF function of the package. One elements of the list is the ccdf for one gene. 
-
-#' @param number_y an integer value indicating the number of y thresholds for the summary curves. Default is \code{length(Y)}.
+#' @param x an object of class \code{\link{cit_gsa}} 
+#' 
+#' @param ... further arguments to be passed
 #'
 #' @return a \code{\link[ggplot2]{ggplot}} object
 #' 
 #' @export
 #'
 #' @examples
-#'
-#' set.seed(123)
-#' n <- 500
-#' r <- 200
-#' 
-#' Z <- rnorm(n)
-#' X <- Z + rnorm(n, sd=0.2)
-#' M <- data.frame(replicate(r, Z) + rnorm(n*r, 0, 0.5))
-#' 
-#' g <- colnames(M)
-#' geneset <- list(c(g[1],g[2],g[3]))
-#' 
-#' ccdf <- lapply(geneset[[1]], function(x){
-#'   Y <- M[,x]
-#'   ccdf(Y, data.frame(X), Z=NULL, method="OLS",space_y = T, number_y = 10) 
-#' })
-#'names(ccdf) = geneset[[1]]
-#'
-#'plot_ccdf_cit_gsa(ccdf, number_y=20)
-#'
-#'# Ne fonctionne pas parce que X numérique : REPARER 
+#' #TO DO
 
 
 
-plot.citcdf <- function(x, ...){ # ou x est l'objet qui sort de cit_gsa
+
+plot.citcdf <- function(x, ...){ 
   
   if(x$type =="gsa"){
     
