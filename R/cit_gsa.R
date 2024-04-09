@@ -335,26 +335,27 @@ cit_gsa <- function(M,
     H <- n_Y_all*(solve(crossprod(modelmat)) %*% t(modelmat))[indexes_X, , drop=FALSE] 
     # length of Y, same for each genes because X and Y are the same 
     
+    
+    
+    
     if(length(geneset)<3){
       pboptions(type="none")
     }
     
     n_cpus <- min(length(geneset), n_cpus)
     
-    res <- pbapply::pblapply(1:length(geneset), function(k){ # each list of gene set
-      
-      # CHECK 1 : stop if no M column ids match all genes ids in the gene sets
-      measured_genes <- intersect(M_colnames, geneset[[k]]) # if true, displays message
-      
+    res <- pbapply::pblapply(1:length(geneset), function(k){ # 1 -- each list of gene set ----
       
       # Initialisation for each gene in the gene set
       #test_stat_gs <- NULL
       prop_gs <- list()
       indi_pi_gs <- list()
-      
+      ccdf_gw <- list()
+      ccdf <- list()
 
+      measured_genes <- intersect(M_colnames, geneset[[k]])
       
-      if(length(measured_genes)<1){ # check 1-2 : none genes of the 1 or all the geneset are in M
+      if(length(measured_genes)<1){ # check 1 : none genes of the current geneset are in M
         warning("0 genes from geneset ", k, " observed in expression data")
         pval <- NA
         test_stat_list <- NA
@@ -362,14 +363,14 @@ cit_gsa <- function(M,
         
         test_stat_gs <- numeric(length(measured_genes))
         
-        if(length(measured_genes) < length( geneset[[k]])){ # check 3
+        if(length(measured_genes) < length(geneset[[k]])){ # check 2 : some genes of the current geneset are not in M
           warning(" Some genes from geneset ", k, " are not observed in expression data")
         }
         
         
-        # code below if all  the genes in the gene set k are in M, else pval + stat de test = NA
+        # code below if all the genes in the gene set k are in M, else pval + stat de test = NA
         
-        for (i in 1:length(measured_genes)){ # each gene in the gene set k
+        for (i in 1:length(measured_genes)){ # 2 -- each genes in the gene set k ----
           
           Y <- M[, measured_genes[i]]
           
@@ -388,7 +389,7 @@ cit_gsa <- function(M,
           test_stat <- sum(beta^2) * n_Y_all
           
           test_stat_gs[i] <- test_stat # test statistic for each genes in the gene set 
-          
+         
           
           # 2) Pi computation ----
           indi_pi <- matrix(NA, n_Y_all, (p-1)) 
@@ -403,8 +404,14 @@ cit_gsa <- function(M,
           prop_gs[[i]] <- prop # prop for each genes in the gene set 
           
           
-        }
+          ccdf_gw[[i]] <- ccdf(Y=Y, X=X, Z=Z, method="OLS", fast=TRUE, space_y=FALSE, number_y=10)
+          
+         
+        } # ICIIIIIIIIIIII  pour ccdf !!!!!................................................
+        
       }
+      ccdf[[k]] <- ccdf_gw
+        
         
         
         indi_pi_gs_tab <- do.call(cbind, indi_pi_gs)
@@ -430,7 +437,12 @@ cit_gsa <- function(M,
         pval <- survey::pchisqsum(sum(test_stat_gs), lower.tail = FALSE, 
                                   df = rep(1, ncol(Sigma2)), 
                                   a =decomp$values , method = "saddlepoint")
-        return(list("pval" = pval, "test_stat_gs" = test_stat_gs))
+        
+      
+        
+        return(list("pval" = pval, "test_stat_gs" = test_stat_gs,"ccdf" = ccdf))
+        
+        
       
       },
     cl = n_cpus)
@@ -441,26 +453,25 @@ cit_gsa <- function(M,
     
     test_stat_list <- lapply(res, "[[", "test_stat_gs")
   
-    
+    ccdf <- lapply(res, "[[", "ccdf")
+
   }
 
-  
   df <- data.frame(raw_pval = pvals,
                    adj_pval = p.adjust(pvals, method="BH"),
                    test_statistic = sapply(test_stat_list, sum))
                                                      
   #rownames(df) <- M_colnames
-  
-  
+
   
   output <- list(which_test = test,
                  n_perm = n_perm, 
-                 pvals = df)
+                 pvals = df, 
+                 ccdf = ccdf)
   
-  class(output) <- "cit_gsa"
+  class(output) <- "citcdf"
+  output$type <- "gsa"
   return(output)
-  
-  
   
 }
 
