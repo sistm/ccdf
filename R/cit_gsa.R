@@ -95,18 +95,18 @@
 #'                            test="asymptotic", parallel=FALSE)
 #'res_asymp_unadj$pvals   
 cit_gsa <- function(M,
-                         X,
-                         Z = NULL,
-                         geneset,
-                         test = c("asymptotic","permutation"),
-                         n_perm = 100,
-                         n_perm_adaptive = c(n_perm, n_perm, n_perm*3, n_perm*5),
-                         thresholds = c(0.1,0.05,0.01),
-                         parallel = interactive(),
-                         n_cpus = detectCores() - 1,
-                         adaptive = FALSE,
-                         space_y = TRUE,
-                         number_y = 10){
+                    X,
+                    Z = NULL,
+                    geneset,
+                    test = c("asymptotic","permutation"),
+                    n_perm = 100,
+                    n_perm_adaptive = c(n_perm, n_perm, n_perm*3, n_perm*5),
+                    thresholds = c(0.1,0.05,0.01),
+                    parallel = interactive(),
+                    n_cpus = detectCores() - 1,
+                    adaptive = FALSE,
+                    space_y = TRUE,
+                    number_y = 10){
   
   # checks
   
@@ -329,6 +329,7 @@ cit_gsa <- function(M,
     Sigma2_list <- list()
     decomp_list <- list()
     pval <- NA
+    ccdf_list <- list()
     
     
     n_Y_all <- nrow(M)
@@ -351,8 +352,8 @@ cit_gsa <- function(M,
       #test_stat_gs <- NULL
       prop_gs <- list()
       indi_pi_gs <- list()
-      ccdf_gw <- list()
-      ccdf <- list()
+      ccdf_gs <- list()
+      
       
       measured_genes <- intersect(M_colnames, geneset[[k]])
       
@@ -405,16 +406,16 @@ cit_gsa <- function(M,
           prop_gs[[i]] <- prop # prop for each genes in the gene set 
           
           
-          ccdf_gw[[i]] <- ccdf(Y=Y, X=X, Z=Z, method="OLS", fast=TRUE, space_y=space_y, number_y=number_y)
+          ccdf_gs[[i]] <- ccdf(Y=Y, X=X, Z=Z, method="OLS", fast=TRUE, space_y=space_y, number_y=number_y)
           
           
         } # ICIIIIIIIIIIII  pour ccdf !!!!!................................................
         
       }
-      ccdf[[k]] <- ccdf_gw
-      names(ccdf[[k]]) <- measured_genes # not geneset, if some genes are not in the data
+      ccdf_list[[k]] <- ccdf_gs
+      names(ccdf_list[[k]]) <- measured_genes # not geneset, if some genes are not in the data
       
-      
+     
       
       indi_pi_gs_tab <- do.call(cbind, indi_pi_gs)
       prop_gs_vec <- unlist(prop_gs)
@@ -442,7 +443,7 @@ cit_gsa <- function(M,
       
       
       
-      return(list("pval" = pval, "test_stat_gs" = test_stat_gs,"ccdf" = ccdf))
+      return(list("pval" = pval, "test_stat_gs" = test_stat_gs,"ccdf" = ccdf_list))
       
       
       
@@ -450,15 +451,27 @@ cit_gsa <- function(M,
     cl = n_cpus)
     pboptions(type="timer")
     
-    
+ 
     
     pvals <- sapply(res, "[[", "pval")
     
     test_stat_list <- lapply(res, "[[", "test_stat_gs")
     
+  
+    
     ccdf <- lapply(res, "[[", "ccdf")
-    ccdf_final <- lapply(seq_along(ccdf[[1]][[1]]), function(i) ccdf[[1]][[1]][[i]])
-    names(ccdf_final) <- names(ccdf[[1]][[1]])
+    # for (i in 1:length(ccdf)){
+    #   if(length(ccdf[[i]])>1){
+    #     ccdf[[i]] <- Filter(Negate(is.null), ccdf[[i]])
+    #   }
+    #   ccdf[[i]] <- lapply(seq_along(ccdf[[i]][[1]]), function(j) ccdf[[i]][[1]][[j]])
+    # }
+    
+    ccdf <- lapply(ccdf, function(x) {
+      if (length(x) > 1) {x <- Filter(Negate(is.null), x)}
+      lapply(seq_along(x[[1]]), function(j) x[[1]][[j]])
+    })
+    
     
   }
   
@@ -472,7 +485,7 @@ cit_gsa <- function(M,
   output <- list(which_test = test,
                  n_perm = n_perm, 
                  pvals = df, 
-                 ccdf = ccdf_final)
+                 ccdf = ccdf)
   
   class(output) <- "citcdf"
   output$type <- "gsa"
