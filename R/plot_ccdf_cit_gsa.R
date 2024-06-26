@@ -19,10 +19,7 @@ plot.citcdf <- function(x, ...){
   
   if(x$type == "gsa"){
   
-    
     ccdf_all <- x$ccdf
-    
-    browser()
     
     for (i in 1:length(ccdf_all)){
       ccdf <- ccdf_all[[i]]
@@ -31,8 +28,6 @@ plot.citcdf <- function(x, ...){
 
       # test_ccdf[[1]][[1]] # accède à Y1 Y2 names(ccdf_all[[1]][[1]])
       # test_ccdf[[2]][[1]] # accède à Y3 Y4 names(ccdf_all[[2]][[1]])
-      
-      browser()
       
       # Create data frame with all the ccdf ----
       data_gene <- do.call(rbind, lapply(genes, function(name) {
