@@ -94,7 +94,7 @@
 #'                            geneset = paste0("Y.", 1:50),
 #'                            test="asymptotic", parallel=FALSE)
 #'res_asymp_unadj$pvals   
-cit_gsa_CCDF <- function(M,
+cit_gsa <- function(M,
                          X,
                          Z = NULL,
                          geneset,
