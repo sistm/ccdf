@@ -409,13 +409,14 @@ cit_gsa <- function(M,
           ccdf_gs[[i]] <- ccdf(Y=Y, X=X, Z=Z, method="OLS", fast=TRUE, space_y=space_y, number_y=number_y)
           
           
-        } # ICIIIIIIIIIIII  pour ccdf !!!!!................................................
+        } 
         
       }
+      
       ccdf_list[[k]] <- ccdf_gs
       names(ccdf_list[[k]]) <- measured_genes # not geneset, if some genes are not in the data
+      # utile comme le refait plus tard ???  
       
-     
       
       indi_pi_gs_tab <- do.call(cbind, indi_pi_gs)
       prop_gs_vec <- unlist(prop_gs)
@@ -460,19 +461,22 @@ cit_gsa <- function(M,
   
     
     ccdf <- lapply(res, "[[", "ccdf")
-    # for (i in 1:length(ccdf)){
-    #   if(length(ccdf[[i]])>1){
-    #     ccdf[[i]] <- Filter(Negate(is.null), ccdf[[i]])
-    #   }
-    #   ccdf[[i]] <- lapply(seq_along(ccdf[[i]][[1]]), function(j) ccdf[[i]][[1]][[j]])
-    # }
     
-    ccdf <- lapply(ccdf, function(x) {
-      if (length(x) > 1) {x <- Filter(Negate(is.null), x)}
-      lapply(seq_along(x[[1]]), function(j) x[[1]][[j]])
-    })
+    for (i in 1:length(ccdf)){
+      if(length(ccdf[[i]])>1){
+        ccdf[[i]] <- Filter(Negate(is.null), ccdf[[i]])
+      }
+      ccdf[[i]] <- lapply(seq_along(ccdf[[i]][[1]]), function(j) ccdf[[i]][[1]][[j]])
+      names(ccdf[[i]]) <- intersect(M_colnames,geneset[[i]])
+      }
     
+    # ccdf_new<- lapply(ccdf, function(x) {
+    #   if (length(x) > 1) {x <- Filter(Negate(is.null), x)}
+    #   lapply(seq_along(x[[1]]), function(j) x[[1]][[j]])
+    #   
+    # })
     
+   # récup genes dans measured gene sinon ??
   }
   
   df <- data.frame(raw_pval = pvals,

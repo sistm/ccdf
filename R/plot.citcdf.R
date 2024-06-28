@@ -24,19 +24,26 @@ plot.citcdf <- function(x, ...){
   
     ccdf_all <- x$ccdf
     
+    browser()
+    
+    #-------------
+    # Case where we have Z !! TO DO : if we don't have Z (change in cot_gsa function?)
+    # Case X qualitatif (values in "sev")
+    #-------------
+    
     for (i in 1:length(ccdf_all)){
       ccdf <- ccdf_all[[i]]
       
-      genes <- names(ccdf[[1]])
-
+      genes <- names(ccdf)
+      
       # test_ccdf[[1]][[1]] # accède à Y1 Y2 names(ccdf_all[[1]][[1]])
       # test_ccdf[[2]][[1]] # accède à Y3 Y4 names(ccdf_all[[2]][[1]])
       
       # Create data frame with all the ccdf ----
       data_gene <- do.call(rbind, lapply(genes, function(name) {
         x <- ccdf[[name]]  
-        df <- cbind.data.frame(x$cdf, x$ccdf, x$x, x$y)
-        colnames(df) <- c("cdf", "ccdf", "x", "y") 
+        df <- cbind.data.frame(x$cdf, x$ccdf_x, x$x, x$y) # not ccdf_nox et z, METTRE ?
+        colnames(df) <- c("cdf", "ccdf_x", "x", "y") 
         df$Gene <- rep(name, nrow(df))
         return(df)
       })) 
@@ -62,10 +69,10 @@ plot.citcdf <- function(x, ...){
         # WARNING : ccdf sorted not y !
         if (n_miss_y != 0){
           df <- data.frame(cbind(rep(max(df$cdf),n_miss_y), 
-                                 rep(max(df$ccdf),n_miss_y), 
+                                 rep(max(df$ccdf_x),n_miss_y), 
                                  rep(df$x[1],n_miss_y), miss_y, 
                                  rep(df$Gene[1],n_miss_y)))
-          colnames(df) <- c("cdf","ccdf","x","y","Gene")
+          colnames(df) <- c("cdf","ccdf_x","x","y","Gene")
           df$x <- factor(df$x, levels = rep(1:length(levels(data_gene$x))) , labels = levels(data_gene$x) ) 
         } else{
           df <- 0
@@ -81,7 +88,7 @@ plot.citcdf <- function(x, ...){
         df <- rbind(data_gene[data_gene$Gene==name,], no_zero[no_zero$Gene==name,])
         df$y <- as.numeric(df$y)
         df$cdf <- as.numeric(df$cdf)
-        df$ccdf <- as.numeric(df$ccdf)
+        df$ccdf_x <- as.numeric(df$ccdf_x)
         return(df)
       }))
       
@@ -100,17 +107,17 @@ plot.citcdf <- function(x, ...){
         filtre_x <- final_data$x == x
         filtre_row_i0 <-  final_data$y >= seuils[1] & final_data$y < seuils[1+1]
         indices0 <- which(filtre_x & filtre_row_i0)
-        med[1] <- median(final_data$ccdf[indices0])
+        med[1] <- median(final_data$ccdf_x[indices0])
         
         for (i in 2:length(seuils)){
           
           filtre_row_i <-  final_data$y >= seuils[i] & final_data$y < seuils[i+1]
           indices <- which(filtre_x & filtre_row_i)
           
-          med[i] <- median(final_data$ccdf[indices])
+          med[i] <- median(final_data$ccdf_x[indices])
           
           ref_value <- med[i-1]
-          range_value <- final_data[filtre_x & filtre_row_i, ]$ccdf
+          range_value <- final_data[filtre_x & filtre_row_i, ]$ccdf_x
           
           closest_index <- min(which(range_value > ref_value))
           closest_value <- range_value[closest_index]
@@ -122,15 +129,15 @@ plot.citcdf <- function(x, ...){
         med <- data.frame(med[1:number_y])
         med$y <- y_after 
         med$x <- x 
-        names(med)[1] <- "ccdf"
+        names(med)[1] <- "ccdf_x"
         
         return(med)
       })
       
       # Replace values with the max : if some values are below the max after it 
       replace_max <- lapply(med, function(m){
-        ind_max <- which.max(m$ccdf)
-        m[ind_max:nrow(m),]$ccdf <- max(m$ccdf)
+        ind_max <- which.max(m$ccdf_x)
+        m[ind_max:nrow(m),]$ccdf_x <- max(m$ccdf_x)
         return(m)
       })
       
@@ -142,7 +149,7 @@ plot.citcdf <- function(x, ...){
         intervalle_indices <- findInterval(new_y$y, df$y, left.open = TRUE) 
         indices_int <- intervalle_indices+1 
         
-        new_y$ccdf <- df$ccdf[indices_int]
+        new_y$ccdf_x <- df$ccdf_x[indices_int]
         new_y$x <- unique(df$x)
         
         return(new_y)
@@ -162,7 +169,7 @@ plot.citcdf <- function(x, ...){
       comb_data <- rbind(data_gene,data_med)
       
       # Plot -----
-      p <- ggplot(data = comb_data, aes(x = y, color=x, y = ccdf,linetype = Legend, size=Legend)) +
+      p <- ggplot(data = comb_data, aes(x = y, color=x, y = ccdf_x,linetype = Legend, size=Legend)) +
         geom_line(aes(group = interaction(Gene,x))) + 
         scale_size_manual(values = c(0.8,0.2)) + # modify row size according to the variable in aes(size) 
         labs(x = "Gene expression") +
