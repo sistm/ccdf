@@ -488,8 +488,7 @@ cit_gsa <- function(M,
   
   output <- list(which_test = test,
                  n_perm = n_perm, 
-                 pvals = df, 
-                 ccdf = ccdf)
+                 pvals = df) #, ccdf = ccdf
   
   class(output) <- "citcdf"
   output$type <- "gsa"
