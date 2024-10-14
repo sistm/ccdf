@@ -352,7 +352,7 @@ cit_gsa <- function(M,
       #test_stat_gs <- NULL
       prop_gs <- list()
       indi_pi_gs <- list()
-      ccdf_gs <- list()
+      #ccdf_gs <- list()
       
       
       measured_genes <- intersect(M_colnames, geneset[[k]])
@@ -406,15 +406,15 @@ cit_gsa <- function(M,
           prop_gs[[i]] <- prop # prop for each genes in the gene set 
           
           
-          ccdf_gs[[i]] <- ccdf(Y=Y, X=X, Z=Z, method="OLS", fast=TRUE, space_y=space_y, number_y=number_y)
+          #ccdf_gs[[i]] <- ccdf(Y=Y, X=X, Z=Z, method="OLS", fast=TRUE, space_y=space_y, number_y=number_y)
           
           
         } 
         
       }
       
-      ccdf_list[[k]] <- ccdf_gs
-      names(ccdf_list[[k]]) <- measured_genes # not geneset, if some genes are not in the data
+      #ccdf_list[[k]] <- ccdf_gs
+      #names(ccdf_list[[k]]) <- measured_genes # not geneset, if some genes are not in the data
       # utile comme le refait plus tard ???  
       
       
@@ -444,7 +444,7 @@ cit_gsa <- function(M,
       
       
       
-      return(list("pval" = pval, "test_stat_gs" = test_stat_gs,"ccdf" = ccdf_list))
+      return(list("pval" = pval, "test_stat_gs" = test_stat_gs)) #,"ccdf" = ccdf_list
       
       
       
@@ -460,15 +460,15 @@ cit_gsa <- function(M,
     
   
     
-    ccdf <- lapply(res, "[[", "ccdf")
+    #ccdf <- lapply(res, "[[", "ccdf")
     
-    for (i in 1:length(ccdf)){
-      if(length(ccdf[[i]])>1){
-        ccdf[[i]] <- Filter(Negate(is.null), ccdf[[i]])
-      }
-      ccdf[[i]] <- lapply(seq_along(ccdf[[i]][[1]]), function(j) ccdf[[i]][[1]][[j]])
-      names(ccdf[[i]]) <- intersect(M_colnames,geneset[[i]])
-      }
+    # for (i in 1:length(ccdf)){
+    #   if(length(ccdf[[i]])>1){
+    #     ccdf[[i]] <- Filter(Negate(is.null), ccdf[[i]])
+    #   }
+    #   ccdf[[i]] <- lapply(seq_along(ccdf[[i]][[1]]), function(j) ccdf[[i]][[1]][[j]])
+    #   names(ccdf[[i]]) <- intersect(M_colnames,geneset[[i]])
+    #   }
     
     # ccdf_new<- lapply(ccdf, function(x) {
     #   if (length(x) > 1) {x <- Filter(Negate(is.null), x)}
