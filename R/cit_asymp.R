@@ -102,8 +102,17 @@ cit_asymp <- function(Y, X, Z = NULL, space_y = FALSE, number_y = length(unique(
   decomp <- eigen(Sigma, symmetric=TRUE, only.values=TRUE)
   
   # computing the pvalue ----
-  pval <- survey::pchisqsum(test_stat, lower.tail = FALSE, df = rep(1, ncol(Sigma)), 
-                            a = decomp$values, method = "saddlepoint")
+  pval <- try(survey::pchisqsum(test_stat, lower.tail = FALSE, df = rep(1, ncol(Sigma)), 
+                                a = decomp$values, method = "saddlepoint"),
+              silent=TRUE)
+  if(inherits(pval, "try-error")){
+    pval <- try(survey::pchisqsum(test_stat, lower.tail = FALSE, df = rep(1, ncol(Sigma)), 
+                                  a = decomp$values, method = "satterthwaite"),
+                silent=TRUE)
+    if(inherits(pval, "try-error")){
+      pval <- NA
+    }
+  }
   
   return(data.frame("raw_pval" = pval, "Stat" = test_stat))
   
