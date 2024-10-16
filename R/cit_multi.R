@@ -130,7 +130,7 @@ cit_multi <- function(M,
                       adaptive = TRUE,
                       space_y = TRUE,
                       number_y = 10){
-  
+
   # check
   if(is.matrix(M)){
     M <- as.data.frame(M)
@@ -204,8 +204,7 @@ cit_multi <- function(M,
     par_clust <- 1L
   }
   
-  
-  
+ 
   
   # Test ----
   ## permutations ----

@@ -54,7 +54,7 @@ cit_asymp <- function(Y, X, Z = NULL, space_y = FALSE, number_y = length(unique(
   }
   
   indexes_X <- which(substring(colnames(modelmat), 1, 1) == "X")
-
+  
   n_Y_all <- length(Y)
   H <- n_Y_all*(solve(crossprod(modelmat)) %*% t(modelmat))[indexes_X, , drop=FALSE]
   # computing the test statistic
@@ -83,15 +83,26 @@ cit_asymp <- function(Y, X, Z = NULL, space_y = FALSE, number_y = length(unique(
   }
   prop <- colMeans(indi_pi)
   
-
+  
   Sigma2 <- 1/ n_Y_all * tcrossprod(H) %x% (prop - prop %x% t(prop))
   Sigma <- Sigma2*upper.tri(Sigma2, diag = TRUE) +  t(Sigma2*upper.tri(Sigma2, diag = FALSE))
-
+  
   decomp <- eigen(Sigma, symmetric=TRUE, only.values=TRUE)
   
+  
+
   # computing the pvalue ----
-  pval <- survey::pchisqsum(test_stat, lower.tail = FALSE, df = rep(1, ncol(Sigma)), 
-                            a = decomp$values, method = "saddlepoint")
+  pval <- try(survey::pchisqsum(test_stat, lower.tail = FALSE, df = rep(1, ncol(Sigma)), 
+                                a = decomp$values, method = "saddlepoint"),
+              silent=TRUE)
+  if(inherits(pval, "try-error")){
+    pval <- try(survey::pchisqsum(test_stat, lower.tail = FALSE, df = rep(1, ncol(Sigma)), 
+                                  a = decomp$values, method = "satterthwaite"),
+                silent=TRUE)
+    if(inherits(pval, "try-error")){
+      pval <- NA
+    }
+  }
   
   return(data.frame("raw_pval" = pval, "Stat" = test_stat))
   

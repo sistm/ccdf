@@ -168,6 +168,9 @@ plot.citcdf <- function(x, ...){
       
       comb_data <- rbind(data_gene,data_med)
       
+    
+      
+      
       # Plot -----
       p <- ggplot(data = comb_data, aes(x = y, color=x, y = ccdf_x,linetype = Legend, size=Legend)) +
         geom_line(aes(group = interaction(Gene,x))) + 

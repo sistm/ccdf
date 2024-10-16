@@ -111,7 +111,7 @@ ccdf <- function(Y, X, Z=NULL, method=c("OLS","logistic"),
       x_sort[[i]] <- X[w,]
       y_sort[[i]] <- Y[w]
       indi_Y <- 1*Ylow
-      
+
       # unCDF
       cdf[[i]] <- rep(sum(indi_Y)/n_Y, sum(w))
       
@@ -137,7 +137,7 @@ ccdf <- function(Y, X, Z=NULL, method=c("OLS","logistic"),
         }
       }
     }
-    
+  
     
     ccdf_unlisted <- unlist(ccdf, use.names = FALSE)
     cdf_unlisted <- unlist(cdf, use.names = FALSE)
