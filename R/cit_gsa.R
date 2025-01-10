@@ -424,16 +424,14 @@ cit_gsa <- function(M,
       
       # 3) Sigma matrix creation ----
       Sigma2 <- matrix(NA, n_g_t*nrow(H), n_g_t*nrow(H)) 
-      new_prop <- matrix(NA, n_g_t, n_g_t)
-      
-      
+
       n_gs_vec <- nrow(indi_pi_gs_tab)
       temp <- indi_pi_gs_tab - matrix(prop_gs_vec, nrow=n_gs_vec, ncol=n_g_t, byrow=TRUE)
       
-      for (i in 1:nrow(new_prop)){  # new prop/new pi computation = the one of the gene set, here it's a matrix 
-        new_prop[i, ] <- (temp[, i]%*%temp)/n_gs_vec + prop_gs_vec[i]*prop_gs_vec
-      }
-      
+        # new prop/new pi computation = the one of the gene set, here it's a matrix
+      new_prop <- apply(temp, MARGIN=2, function(colvec){colvec%*%temp}/n_gs_vec + 
+                        sapply(prop_gs_vec, function(s){s*prop_gs_vec})
+            
       Sigma2 <- 1/n * tcrossprod(H) %x%  (new_prop - prop_gs_vec %x%  t(prop_gs_vec))
       
       decomp <- eigen(Sigma2, symmetric=TRUE, only.values=TRUE)
