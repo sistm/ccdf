@@ -75,6 +75,8 @@
 #'   using Benjamini-Hochberg correction.
 #' }
 #' 
+#' @importFrom fastmatrix kronecker.prod
+#' 
 #' @export
 #'
 #' @examples
@@ -429,10 +431,12 @@ cit_gsa <- function(M,
       temp <- indi_pi_gs_tab - matrix(prop_gs_vec, nrow=n_gs_vec, ncol=n_g_t, byrow=TRUE)
       
         # new prop/new pi computation = the one of the gene set, here it's a matrix
-      new_prop <- apply(temp, MARGIN=2, function(colvec){colvec%*%temp})/n_gs_vec + 
+      new_prop <- crossprod(temp)/n_gs_vec + 
                         sapply(prop_gs_vec, function(s){s*prop_gs_vec})
-            
-      Sigma2 <- 1/n * tcrossprod(H) %x%  (new_prop - prop_gs_vec %x%  t(prop_gs_vec))
+      
+      Sigma2 <- 1/n * kronecker.prod(tcrossprod(H), 
+                                     (new_prop - kronecker.prod(prop_gs_vec, t(prop_gs_vec)))
+      )
       
       decomp <- eigen(Sigma2, symmetric=TRUE, only.values=TRUE)
       

@@ -14,6 +14,7 @@ Authors@R: c(person("Denis", "Agniel", role = c("aut"),
 	                  email = "pierre.neuvial@math.univ-toulouse.fr"))
 Depends: R (>= 3.6)
 Imports: cowplot,
+         fastmatrix,
          ggplot2,
          pbapply, 
          parallel, 
